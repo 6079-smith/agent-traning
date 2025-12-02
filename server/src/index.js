@@ -11,7 +11,6 @@ import generatorRouter from './routes/generator.js';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3001;
 
 // Middleware
 app.use(cors());
@@ -38,6 +37,7 @@ app.get('/api/health', async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+const server = app.listen(0, () => {
+  const port = server.address().port;
+  console.log(`Server running on http://localhost:${port}`);
 });
