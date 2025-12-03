@@ -11,13 +11,15 @@ export const dynamic = 'force-dynamic'
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
+    
     // Check if prompt exists
     const existing = await queryOne<PromptVersion>(
       'SELECT * FROM prompt_versions WHERE id = $1',
-      [params.id]
+      [id]
     )
 
     if (!existing) {
@@ -33,7 +35,7 @@ export async function POST(
     // Activate this prompt
     const prompt = await queryOne<PromptVersion>(
       'UPDATE prompt_versions SET is_active = true WHERE id = $1 RETURNING *',
-      [params.id]
+      [id]
     )
 
     return NextResponse.json(

@@ -1,265 +1,287 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import LoadingSpinner from '@/components/LoadingSpinner'
-import ErrorAlert from '@/components/ErrorAlert'
+import { useState } from 'react'
 import styles from '@/styles/components.module.css'
-import layoutStyles from '@/styles/layout.module.css'
 import btnStyles from '@/styles/buttons.module.css'
 import formStyles from '@/styles/forms.module.css'
 import * as Icons from 'lucide-react'
-import type { KnowledgeBase } from '@/types/database'
 
-const CATEGORIES = ['policies', 'tone', 'escalation', 'products', 'shipping', 'other']
+const STEPS = [
+  { id: 1, title: 'Business Basics', icon: Icons.Building2 },
+  { id: 2, title: 'Policies', icon: Icons.FileText },
+  { id: 3, title: 'Capabilities & Limitations', icon: Icons.Zap },
+  { id: 4, title: 'Tone & Brand', icon: Icons.MessageSquare },
+  { id: 5, title: 'Known Failure Patterns', icon: Icons.AlertTriangle },
+]
 
 export default function WizardPage() {
-  const [knowledge, setKnowledge] = useState<KnowledgeBase[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [selectedCategory, setSelectedCategory] = useState('policies')
+  const [currentStep, setCurrentStep] = useState(1)
   const [formData, setFormData] = useState({
-    category: 'policies',
-    key: '',
-    value: '',
+    // Step 1: Business Basics
+    companyName: '',
+    products: '',
+    countries: '',
+    notShipTo: '',
+    
+    // Step 2: Policies
+    refundPolicy: '',
+    shippingPolicy: '',
+    returnPolicy: '',
+    
+    // Step 3: Capabilities & Limitations
+    canDo: '',
+    cannotDo: '',
+    
+    // Step 4: Tone & Brand
+    toneGuidelines: '',
+    brandVoice: '',
+    
+    // Step 5: Known Failure Patterns
+    failurePatterns: '',
   })
-  const [submitting, setSubmitting] = useState(false)
-  const [editingId, setEditingId] = useState<number | null>(null)
 
-  useEffect(() => {
-    fetchKnowledge()
-  }, [])
-
-  async function fetchKnowledge() {
-    try {
-      setLoading(true)
-      setError(null)
-      const res = await fetch('/api/knowledge')
-      const data = await res.json()
-      if (data.error) throw new Error(data.error)
-      setKnowledge(data.data || [])
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load knowledge base')
-    } finally {
-      setLoading(false)
+  const handleNext = () => {
+    if (currentStep < STEPS.length) {
+      setCurrentStep(currentStep + 1)
     }
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    if (!formData.key || !formData.value) {
-      setError('Please fill in all fields')
-      return
-    }
-
-    try {
-      setSubmitting(true)
-      setError(null)
-
-      const url = editingId ? `/api/knowledge/${editingId}` : '/api/knowledge'
-      const method = editingId ? 'PUT' : 'POST'
-
-      const res = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      })
-
-      const data = await res.json()
-      if (data.error) throw new Error(data.error)
-
-      setFormData({ category: selectedCategory, key: '', value: '' })
-      setEditingId(null)
-      fetchKnowledge()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save knowledge entry')
-    } finally {
-      setSubmitting(false)
+  const handlePrevious = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1)
     }
   }
 
-  async function handleDelete(id: number) {
-    if (!confirm('Are you sure you want to delete this entry?')) return
-
-    try {
-      setError(null)
-      const res = await fetch(`/api/knowledge/${id}`, { method: 'DELETE' })
-      const data = await res.json()
-      if (data.error) throw new Error(data.error)
-      fetchKnowledge()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete entry')
-    }
+  const handleSubmit = async () => {
+    // TODO: Save to API
+    console.log('Submitting:', formData)
+    alert('Training data saved!')
   }
 
-  function startEdit(entry: KnowledgeBase) {
-    setEditingId(entry.id)
-    setFormData({
-      category: entry.category,
-      key: entry.key,
-      value: entry.value,
-    })
-    setSelectedCategory(entry.category)
+  const updateField = (field: string, value: string) => {
+    setFormData({ ...formData, [field]: value })
   }
 
-  function cancelEdit() {
-    setEditingId(null)
-    setFormData({ category: selectedCategory, key: '', value: '' })
-  }
+  const progress = (currentStep / STEPS.length) * 100
 
-  const filteredKnowledge = knowledge.filter((k) => k.category === selectedCategory)
-  const knowledgeByCategory = CATEGORIES.map((cat) => ({
-    category: cat,
-    count: knowledge.filter((k) => k.category === cat).length,
-  }))
-
-  if (loading) {
-    return (
-      <div className={layoutStyles.pageContainer}>
-        <LoadingSpinner size="large" message="Loading knowledge base..." />
-      </div>
-    )
-  }
-
-  return (
-    <div className={layoutStyles.pageContainer}>
-      <div className={layoutStyles.pageHeader}>
-        <h1>Training Wizard</h1>
-        <p className={styles.subtitle}>Teach the AI evaluator about your business context</p>
-      </div>
-
-      {error && <ErrorAlert message={error} onDismiss={() => setError(null)} />}
-
-      <div className={styles.section}>
-        <div className={styles.infoRow}>
-          <Icons.Info size={20} />
-          <p>
-            Add key-value pairs to teach the AI about your business policies, tone guidelines,
-            escalation rules, and more. This knowledge will be used when evaluating agent responses.
-          </p>
-        </div>
-      </div>
-
-      {/* Category Stats */}
-      <div className={styles.statsPanel}>
-        {knowledgeByCategory.map(({ category, count }) => (
-          <div
-            key={category}
-            className={`${styles.statsCard} ${selectedCategory === category ? styles.statsCardActive : ''}`}
-            onClick={() => setSelectedCategory(category)}
-            style={{ cursor: 'pointer' }}
-          >
-            <div className={styles.statsCardHeader}>
-              <span className={styles.statsCardTitle}>
-                {category.charAt(0).toUpperCase() + category.slice(1)}
-              </span>
-            </div>
-            <div className={styles.statsCardValue}>{count}</div>
-          </div>
-        ))}
-      </div>
-
-      <div className={styles.wizardGrid}>
-        {/* Left: Form */}
-        <div className={styles.wizardPanel}>
-          <h3>{editingId ? 'Edit Entry' : 'Add New Entry'}</h3>
-          <form onSubmit={handleSubmit}>
+  const renderStepContent = () => {
+    switch (currentStep) {
+      case 1:
+        return (
+          <>
             <div className={formStyles.formGroup}>
-              <label className={formStyles.label}>Category</label>
-              <select
-                className={formStyles.select}
-                value={formData.category}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-              >
-                {CATEGORIES.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat.charAt(0).toUpperCase() + cat.slice(1)}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className={formStyles.formGroup}>
-              <label className={formStyles.label}>Key</label>
+              <label className={formStyles.label}>What is your company name?</label>
               <input
                 type="text"
                 className={formStyles.input}
-                value={formData.key}
-                onChange={(e) => setFormData({ ...formData, key: e.target.value })}
-                placeholder="e.g., refund_policy"
-                required
+                value={formData.companyName}
+                onChange={(e) => updateField('companyName', e.target.value)}
+                placeholder="e.g., Acme Corp"
               />
             </div>
-
             <div className={formStyles.formGroup}>
-              <label className={formStyles.label}>Value</label>
+              <label className={formStyles.label}>What products do you sell? (e.g., small, snus, pouches)</label>
               <textarea
                 className={formStyles.textarea}
-                value={formData.value}
-                onChange={(e) => setFormData({ ...formData, value: e.target.value })}
-                placeholder="Enter the policy, guideline, or information..."
-                rows={8}
-                required
+                value={formData.products}
+                onChange={(e) => updateField('products', e.target.value)}
+                rows={4}
+                placeholder="Describe your products..."
               />
             </div>
+            <div className={formStyles.formGroup}>
+              <label className={formStyles.label}>Which countries do you ship to?</label>
+              <textarea
+                className={formStyles.textarea}
+                value={formData.countries}
+                onChange={(e) => updateField('countries', e.target.value)}
+                rows={3}
+                placeholder="List countries..."
+              />
+            </div>
+            <div className={formStyles.formGroup}>
+              <label className={formStyles.label}>Which countries do you NOT ship to?</label>
+              <textarea
+                className={formStyles.textarea}
+                value={formData.notShipTo}
+                onChange={(e) => updateField('notShipTo', e.target.value)}
+                rows={3}
+                placeholder="List countries..."
+              />
+            </div>
+          </>
+        )
+      case 2:
+        return (
+          <>
+            <div className={formStyles.formGroup}>
+              <label className={formStyles.label}>Refund Policy</label>
+              <textarea
+                className={formStyles.textarea}
+                value={formData.refundPolicy}
+                onChange={(e) => updateField('refundPolicy', e.target.value)}
+                rows={5}
+                placeholder="Describe your refund policy..."
+              />
+            </div>
+            <div className={formStyles.formGroup}>
+              <label className={formStyles.label}>Shipping Policy</label>
+              <textarea
+                className={formStyles.textarea}
+                value={formData.shippingPolicy}
+                onChange={(e) => updateField('shippingPolicy', e.target.value)}
+                rows={5}
+                placeholder="Describe your shipping policy..."
+              />
+            </div>
+            <div className={formStyles.formGroup}>
+              <label className={formStyles.label}>Return Policy</label>
+              <textarea
+                className={formStyles.textarea}
+                value={formData.returnPolicy}
+                onChange={(e) => updateField('returnPolicy', e.target.value)}
+                rows={5}
+                placeholder="Describe your return policy..."
+              />
+            </div>
+          </>
+        )
+      case 3:
+        return (
+          <>
+            <div className={formStyles.formGroup}>
+              <label className={formStyles.label}>What CAN your agents do?</label>
+              <textarea
+                className={formStyles.textarea}
+                value={formData.canDo}
+                onChange={(e) => updateField('canDo', e.target.value)}
+                rows={6}
+                placeholder="List capabilities..."
+              />
+            </div>
+            <div className={formStyles.formGroup}>
+              <label className={formStyles.label}>What CANNOT your agents do?</label>
+              <textarea
+                className={formStyles.textarea}
+                value={formData.cannotDo}
+                onChange={(e) => updateField('cannotDo', e.target.value)}
+                rows={6}
+                placeholder="List limitations..."
+              />
+            </div>
+          </>
+        )
+      case 4:
+        return (
+          <>
+            <div className={formStyles.formGroup}>
+              <label className={formStyles.label}>Tone Guidelines</label>
+              <textarea
+                className={formStyles.textarea}
+                value={formData.toneGuidelines}
+                onChange={(e) => updateField('toneGuidelines', e.target.value)}
+                rows={6}
+                placeholder="Describe the tone your agents should use..."
+              />
+            </div>
+            <div className={formStyles.formGroup}>
+              <label className={formStyles.label}>Brand Voice</label>
+              <textarea
+                className={formStyles.textarea}
+                value={formData.brandVoice}
+                onChange={(e) => updateField('brandVoice', e.target.value)}
+                rows={6}
+                placeholder="Describe your brand voice..."
+              />
+            </div>
+          </>
+        )
+      case 5:
+        return (
+          <>
+            <div className={formStyles.formGroup}>
+              <label className={formStyles.label}>Known Failure Patterns</label>
+              <textarea
+                className={formStyles.textarea}
+                value={formData.failurePatterns}
+                onChange={(e) => updateField('failurePatterns', e.target.value)}
+                rows={10}
+                placeholder="Describe common mistakes or failure patterns to avoid..."
+              />
+            </div>
+          </>
+        )
+      default:
+        return null
+    }
+  }
 
-            <div className={styles.buttonGroup}>
-              {editingId && (
-                <button
-                  type="button"
-                  onClick={cancelEdit}
-                  className={btnStyles.secondary}
-                >
-                  Cancel
-                </button>
-              )}
-              <button type="submit" className={btnStyles.primary} disabled={submitting}>
-                {submitting ? 'Saving...' : editingId ? 'Update' : 'Add Entry'}
+  return (
+    <div>
+      {/* Header */}
+      <div className={styles.wizardHeader}>
+        <h1>Training Wizard</h1>
+        <p className={styles.wizardSubtitle}>Teach the AI evaluator about your business</p>
+      </div>
+
+      {/* Progress Steps */}
+      <div className={styles.wizardSteps}>
+        {STEPS.map((step) => {
+          const StepIcon = step.icon
+          return (
+            <div
+              key={step.id}
+              className={`${styles.wizardStepTab} ${
+                currentStep === step.id ? styles.wizardStepActive : ''
+              } ${
+                currentStep > step.id ? styles.wizardStepComplete : ''
+              }`}
+              onClick={() => setCurrentStep(step.id)}
+            >
+              <div className={styles.wizardStepNumber}>{step.id}</div>
+              <div className={styles.wizardStepInfo}>
+                <div className={styles.wizardStepTitle}>{step.title}</div>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Progress Bar */}
+      <div className={styles.wizardProgressBar}>
+        <div className={styles.wizardProgressFill} style={{ width: `${progress}%` }} />
+      </div>
+
+      {/* Form Content */}
+      <div className={styles.wizardFormContainer}>
+        <div className={styles.wizardFormCard}>
+          <h2 className={styles.wizardFormTitle}>{STEPS[currentStep - 1].title}</h2>
+          <div className={styles.wizardFormContent}>
+            {renderStepContent()}
+          </div>
+
+          {/* Navigation Buttons */}
+          <div className={styles.wizardFormActions}>
+            <button
+              onClick={handlePrevious}
+              className={btnStyles.secondary}
+              disabled={currentStep === 1}
+            >
+              <Icons.ChevronLeft size={18} />
+              Previous
+            </button>
+            {currentStep < STEPS.length ? (
+              <button onClick={handleNext} className={btnStyles.primary}>
+                Next
+                <Icons.ChevronRight size={18} />
               </button>
-            </div>
-          </form>
-        </div>
-
-        {/* Right: List */}
-        <div className={styles.wizardPanel}>
-          <h3>
-            {selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} ({filteredKnowledge.length})
-          </h3>
-          {filteredKnowledge.length === 0 ? (
-            <div className={styles.emptyPanel}>
-              <Icons.FileText size={32} />
-              <p>No entries in this category yet</p>
-            </div>
-          ) : (
-            <div className={styles.knowledgeList}>
-              {filteredKnowledge.map((entry) => (
-                <div key={entry.id} className={styles.knowledgeEntry}>
-                  <div className={styles.knowledgeHeader}>
-                    <strong>{entry.key}</strong>
-                    <div className={styles.actionButtons}>
-                      <button
-                        onClick={() => startEdit(entry)}
-                        className={btnStyles.iconButton}
-                        title="Edit"
-                      >
-                        <Icons.Edit size={14} />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(entry.id)}
-                        className={`${btnStyles.iconButton} ${btnStyles.danger}`}
-                        title="Delete"
-                      >
-                        <Icons.Trash2 size={14} />
-                      </button>
-                    </div>
-                  </div>
-                  <p className={styles.knowledgeValue}>{entry.value}</p>
-                  <div className={styles.knowledgeMeta}>
-                    Updated: {new Date(entry.updated_at).toLocaleDateString()}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+            ) : (
+              <button onClick={handleSubmit} className={btnStyles.primary}>
+                <Icons.Check size={18} />
+                Complete Training
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>

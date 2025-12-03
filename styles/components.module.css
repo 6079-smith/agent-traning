@@ -6,6 +6,192 @@
  */
 
 /* =============================================================================
+   DASHBOARD
+   ============================================================================= */
+
+.dashboardHeader {
+  margin-bottom: 32px;
+}
+
+.dashboardHeader h1 {
+  margin: 0 0 8px 0;
+  font-size: 32px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.dashboardSubtitle {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+/* Status Cards Grid */
+.statusGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  margin-bottom: 40px;
+}
+
+.statusCard {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  transition: all 0.2s ease;
+}
+
+.statusCard:hover {
+  border-color: #4a5568;
+}
+
+.statusCardError {
+  border-left: 3px solid var(--danger-color);
+}
+
+.statusCardWarning {
+  border-left: 3px solid var(--warning);
+}
+
+.statusIcon {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  background: rgba(74, 144, 226, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #4a90e2;
+  flex-shrink: 0;
+}
+
+.statusCardError .statusIcon {
+  background: rgba(217, 83, 79, 0.1);
+  color: var(--danger-color);
+}
+
+.statusCardWarning .statusIcon {
+  background: rgba(245, 158, 11, 0.1);
+  color: var(--warning);
+}
+
+.statusContent {
+  flex: 1;
+}
+
+.statusLabel {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.statusValue {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.statusCardError .statusValue {
+  color: var(--danger-color);
+}
+
+.statusCardWarning .statusValue {
+  color: var(--warning);
+}
+
+/* Quick Actions Section */
+.quickActionsSection {
+  margin-top: 40px;
+}
+
+.quickActionsSection .sectionTitle {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 20px 0;
+}
+
+.quickActionsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.quickActionCard {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 24px;
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  text-decoration: none;
+  color: var(--text-primary);
+  transition: all 0.2s ease;
+}
+
+.quickActionCard:hover {
+  border-color: #4a90e2;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.quickActionIcon {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  background: rgba(74, 144, 226, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #4a90e2;
+  flex-shrink: 0;
+}
+
+.quickActionContent {
+  flex: 1;
+}
+
+.quickActionContent h3 {
+  margin: 0 0 6px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.quickActionContent p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+/* Responsive Dashboard */
+@media (max-width: 1200px) {
+  .statusGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .statusGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .quickActionsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboardHeader h1 {
+    font-size: 24px;
+  }
+}
+
+/* =============================================================================
    SECTION / CARD CONTAINER
    Used for grouping related content (filters, tables, etc.)
    ============================================================================= */
@@ -1038,6 +1224,12 @@
   background: rgba(0, 0, 0, 0.02);
 }
 
+.panelFooter button {
+  min-width: 180px;
+  width: auto;
+  flex-shrink: 0;
+}
+
 .playgroundTextarea {
   flex: 1;
   padding: 20px;
@@ -1048,6 +1240,14 @@
   line-height: 1.6;
   overflow-y: auto;
   background: var(--card-bg);
+  color: var(--text-primary);
+}
+
+.formattedResponse {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-size: 14px;
+  line-height: 1.8;
   color: var(--text-primary);
 }
 
@@ -1072,6 +1272,558 @@
 .emptyPanel p {
   margin: 0;
   font-size: 14px;
+}
+
+/* ============================================
+   TRAINING WIZARD
+   ============================================ */
+
+.wizardHeader {
+  margin-bottom: 32px;
+}
+
+.wizardHeader h1 {
+  margin: 0 0 8px 0;
+  font-size: 32px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.wizardSubtitle {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+/* Wizard Steps Tabs */
+.wizardSteps {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.wizardStepTab {
+  flex: 1;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.wizardStepTab:hover {
+  border-color: #4a90e2;
+}
+
+.wizardStepActive {
+  border-color: #4a90e2;
+  background: rgba(74, 144, 226, 0.05);
+}
+
+.wizardStepComplete {
+  border-color: var(--success-color);
+  background: rgba(16, 185, 129, 0.05);
+}
+
+.wizardStepNumber {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(74, 144, 226, 0.1);
+  color: #4a90e2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.wizardStepActive .wizardStepNumber {
+  background: #4a90e2;
+  color: white;
+}
+
+.wizardStepComplete .wizardStepNumber {
+  background: var(--success-color);
+  color: white;
+}
+
+.wizardStepInfo {
+  flex: 1;
+}
+
+.wizardStepTitle {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+/* Progress Bar */
+.wizardProgressBar {
+  height: 4px;
+  background: var(--border-color);
+  border-radius: 2px;
+  margin-bottom: 32px;
+  overflow: hidden;
+}
+
+.wizardProgressFill {
+  height: 100%;
+  background: linear-gradient(90deg, #4a90e2 0%, #667eea 100%);
+  transition: width 0.3s ease;
+}
+
+/* Form Container */
+.wizardFormContainer {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.wizardFormCard {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 32px;
+}
+
+.wizardFormTitle {
+  margin: 0 0 24px 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.wizardFormContent {
+  margin-bottom: 32px;
+}
+
+.wizardFormActions {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border-color);
+}
+
+.wizardFormActions button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Responsive Wizard */
+@media (max-width: 768px) {
+  .wizardSteps {
+    flex-direction: column;
+  }
+
+  .wizardFormCard {
+    padding: 24px 20px;
+  }
+
+  .wizardHeader h1 {
+    font-size: 24px;
+  }
+
+  .wizardFormActions {
+    flex-direction: column-reverse;
+  }
+
+  .wizardFormActions button {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* ============================================
+   PROMPT EDITOR
+   ============================================ */
+
+.promptEditorHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 32px;
+}
+
+.promptEditorHeader h1 {
+  margin: 0 0 8px 0;
+  font-size: 32px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.promptEditorSubtitle {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.promptEditorActions {
+  display: flex;
+  gap: 12px;
+}
+
+/* Two Column Layout */
+.promptEditorGrid {
+  display: grid;
+  grid-template-columns: 350px 1fr;
+  gap: 20px;
+  height: calc(100vh - 200px);
+}
+
+/* Left: Prompt List */
+.promptList {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.promptListHeader {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.promptListHeader h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.promptListItems {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.promptListItem {
+  padding: 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 8px;
+  border: 1px solid transparent;
+}
+
+.promptListItem:hover {
+  background: rgba(0, 0, 0, 0.02);
+  border-color: var(--border-color);
+}
+
+.promptListItemActive {
+  background: rgba(74, 144, 226, 0.05);
+  border-color: #4a90e2;
+}
+
+.promptListItemHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.promptListItemHeader strong {
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.promptActiveBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--success-color);
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.promptListItemNotes {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+.promptListItemMeta {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* Right: Form Panel */
+.promptFormPanel {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.promptFormEmpty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-muted);
+  gap: 16px;
+}
+
+.promptFormEmpty svg {
+  opacity: 0.3;
+}
+
+.promptFormHeader {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.promptFormHeader h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.promptFormHeaderActions {
+  display: flex;
+  gap: 8px;
+}
+
+.promptFormContent {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+}
+
+.promptTextareaHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 4px;
+}
+
+.promptTextareaHeader span {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.promptTextarea {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.promptFormFooter {
+  padding: 16px 24px;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+/* Responsive Prompt Editor */
+@media (max-width: 1024px) {
+  .promptEditorGrid {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+
+  .promptList {
+    max-height: 400px;
+  }
+
+  .promptFormPanel {
+    min-height: 600px;
+  }
+}
+
+@media (max-width: 768px) {
+  .promptEditorHeader {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .promptEditorActions {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .promptEditorActions button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .promptEditorHeader h1 {
+    font-size: 24px;
+  }
+}
+
+/* ============================================
+   RESULTS PAGE
+   ============================================ */
+
+.resultsCard {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.resultsCardHeader {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.resultsCardHeader h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.resultItem {
+  border-bottom: 1px solid var(--border-color);
+}
+
+.resultItem:last-child {
+  border-bottom: none;
+}
+
+.resultItemHeader {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  padding: 20px 24px;
+  transition: background 0.2s ease;
+}
+
+.resultItemHeader:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.resultItemHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.resultScore {
+  font-size: 20px;
+  font-weight: bold;
+  min-width: 60px;
+}
+
+.resultItemTitle {
+  font-weight: 500;
+  color: var(--text-primary);
+  margin: 0 0 4px 0;
+  font-size: 14px;
+}
+
+.resultItemMeta {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.resultItemExpanded {
+  padding: 0 24px 24px 24px;
+  border-top: 1px solid var(--border-color);
+}
+
+.resultItemGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+
+.resultItemLabel {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin: 0 0 8px 0;
+}
+
+.resultItemPre {
+  font-size: 12px;
+  background: var(--bg);
+  padding: 12px;
+  border-radius: 8px;
+  overflow: auto;
+  max-height: 192px;
+  color: var(--text-muted);
+  margin: 0;
+  font-family: 'Courier New', monospace;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.resultItemResponse {
+  font-size: 14px;
+  background: var(--bg);
+  padding: 12px;
+  border-radius: 8px;
+  overflow: auto;
+  max-height: 192px;
+  color: var(--text-muted);
+}
+
+.resultItemReasoning {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.ruleChecksContainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ruleCheckBadge {
+  padding: 4px 8px;
+  font-size: 12px;
+  border-radius: 12px;
+  font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .resultItemGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .resultScore {
+    font-size: 18px;
+    min-width: 50px;
+  }
+
+  .resultItemHeaderLeft {
+    gap: 12px;
+  }
 }
 
 /* ============================================

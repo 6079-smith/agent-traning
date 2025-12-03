@@ -11,12 +11,13 @@ export const dynamic = 'force-dynamic'
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const prompt = await queryOne<PromptVersion>(
       'SELECT * FROM prompt_versions WHERE id = $1',
-      [params.id]
+      [id]
     )
 
     if (!prompt) {
@@ -42,15 +43,16 @@ export async function GET(
  */
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const body = await request.json()
 
     // Check if prompt exists
     const existing = await queryOne<PromptVersion>(
       'SELECT * FROM prompt_versions WHERE id = $1',
-      [params.id]
+      [id]
     )
 
     if (!existing) {
@@ -83,7 +85,7 @@ export async function PUT(
         body.user_prompt,
         body.is_active,
         body.notes,
-        params.id,
+        id,
       ]
     )
 
@@ -105,12 +107,13 @@ export async function PUT(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const rowsAffected = await execute(
       'DELETE FROM prompt_versions WHERE id = $1',
-      [params.id]
+      [id]
     )
 
     if (rowsAffected === 0) {

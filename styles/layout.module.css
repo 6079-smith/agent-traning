@@ -84,8 +84,8 @@
 }
 
 .sidebar {
-  width: 260px;
-  background: var(--card-bg);
+  width: 288px;
+  background: var(--card);
   border-right: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
@@ -98,12 +98,22 @@
 }
 
 .sidebarHeader {
-  padding: 24px 20px;
+  padding: 20px;
   border-bottom: 1px solid var(--border-color);
   display: flex;
-  align-items: center;
-  gap: 12px;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sidebarBrand {
+  font-size: 18px;
+  font-weight: 600;
   color: var(--text-primary);
+}
+
+.sidebarSubtitle {
+  font-size: 12px;
+  color: var(--text-muted);
 }
 
 .sidebarTitle {
@@ -113,40 +123,41 @@
 
 .sidebarNav {
   flex: 1;
-  padding: 16px 12px;
+  padding: 12px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
 }
 
 .sidebarLink {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px 16px;
-  border-radius: 8px;
+  padding: 10px 12px;
+  border-radius: 6px;
   text-decoration: none;
-  color: var(--text-muted);
+  color: #9aa0a6;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 400;
   transition: all 0.2s ease;
 }
 
 .sidebarLink:hover {
-  background: rgba(0, 0, 0, 0.04);
+  background: rgba(255, 255, 255, 0.05);
   color: var(--text-primary);
 }
 
 .sidebarLinkActive {
-  background: rgba(0, 0, 0, 0.06);
-  color: var(--text-primary);
-  font-weight: 600;
+  background: rgba(68, 113, 186, 0.15);
+  color: #4471BA;
+  font-weight: 500;
 }
 
 .mainContent {
   flex: 1;
-  margin-left: 260px;
+  margin-left: 288px;
   min-height: 100vh;
+  padding: 32px;
 }
 
 .sidebarNavItem {

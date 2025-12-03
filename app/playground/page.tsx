@@ -177,35 +177,41 @@ export default function PlaygroundPage() {
       <div className={styles.section}>
         <div className={formStyles.formRow}>
           <div className={formStyles.formGroup}>
-            <label className={formStyles.label}>Select Prompt</label>
+            <label className={formStyles.label}>Prompt Version</label>
             <select
               className={formStyles.select}
               value={selectedPromptId || ''}
               onChange={(e) => setSelectedPromptId(Number(e.target.value))}
             >
-              <option value="">Choose a prompt...</option>
+              <option value="">-- Select a prompt version --</option>
               {prompts.map((prompt) => (
                 <option key={prompt.id} value={prompt.id}>
                   {prompt.name} {prompt.is_active ? '(Active)' : ''}
                 </option>
               ))}
             </select>
+            <div className={formStyles.helpText}>
+              Choose which prompt version to use for generating responses
+            </div>
           </div>
 
           <div className={formStyles.formGroup}>
-            <label className={formStyles.label}>Load Test Case (Optional)</label>
+            <label className={formStyles.label}>Test Case (Optional)</label>
             <select
               className={formStyles.select}
               value={selectedTestCaseId || ''}
               onChange={(e) => loadTestCase(Number(e.target.value))}
             >
-              <option value="">Choose a test case...</option>
+              <option value="">-- Load a saved test case --</option>
               {testCases.map((tc) => (
                 <option key={tc.id} value={tc.id}>
                   {tc.name}
                 </option>
               ))}
             </select>
+            <div className={formStyles.helpText}>
+              Load a saved email thread or paste your own below
+            </div>
           </div>
         </div>
       </div>
@@ -227,10 +233,11 @@ export default function PlaygroundPage() {
               onClick={handleGenerate}
               className={btnStyles.primary}
               disabled={!selectedPromptId || !emailThread || generating}
+              style={{ width: 'auto', minWidth: '180px', maxWidth: 'fit-content' }}
             >
               {generating ? (
                 <>
-                  <LoadingSpinner size="small" />
+                  <Icons.Loader2 size={18} className="animate-spin" />
                   Generating...
                 </>
               ) : (
@@ -258,7 +265,11 @@ export default function PlaygroundPage() {
             )}
           </div>
           <div className={styles.playgroundTextarea}>
-            {generatedResponse || (
+            {generatedResponse ? (
+              <div className={styles.formattedResponse}>
+                {generatedResponse}
+              </div>
+            ) : (
               <div className={styles.emptyPanel}>
                 <Icons.MessageSquare size={32} />
                 <p>Generated response will appear here</p>
@@ -270,10 +281,11 @@ export default function PlaygroundPage() {
               onClick={handleEvaluate}
               className={btnStyles.secondary}
               disabled={!generatedResponse || evaluating}
+              style={{ width: 'auto', minWidth: '140px', maxWidth: 'fit-content' }}
             >
               {evaluating ? (
                 <>
-                  <LoadingSpinner size="small" />
+                  <Icons.Loader2 size={18} className="animate-spin" />
                   Evaluating...
                 </>
               ) : (
@@ -284,7 +296,11 @@ export default function PlaygroundPage() {
               )}
             </button>
             {selectedTestCaseId && generatedResponse && (
-              <button onClick={handleSaveResult} className={btnStyles.success}>
+              <button 
+                onClick={handleSaveResult} 
+                className={btnStyles.success}
+                style={{ width: 'auto', minWidth: '140px', maxWidth: 'fit-content' }}
+              >
                 <Icons.Save size={18} />
                 Save Result
               </button>
@@ -309,7 +325,9 @@ export default function PlaygroundPage() {
 
                 <div className={styles.evaluationSection}>
                   <h4>Overall Assessment</h4>
-                  <p>{evaluation.reasoning}</p>
+                  <div className={styles.formattedResponse}>
+                    {evaluation.reasoning}
+                  </div>
                 </div>
 
                 <div className={styles.evaluationSection}>

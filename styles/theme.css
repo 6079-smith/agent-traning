@@ -1,17 +1,24 @@
 :root {
-  /* Colors */
-  --bg: #1e2128;
+  /* Colors - Matching dev branch exactly */
+  --bg: #1E2128;
   --card: #252831;
+  --card-bg: #252831;
   --card-border: #343741;
-  --text: #ffffff;
-  --text-secondary: #e0e8f0;
-  --link: #4693d1;
-  --btn: #1878b9;
-  --btn-success: #469b3b;
-  --muted: #9aa0a6;
-  --danger: #d9534f;
-  --warning: #f59e0b;
+  --border-color: #343741;
+  --text: #FFFFFF;
+  --text-primary: #FFFFFF;
+  --text-secondary: #D1D5DB;
+  --text-muted: #9CA3AF;
+  --link: #4471BA;
+  --link-color: #4471BA;
+  --btn: #4471BA;
+  --btn-success: #469B3B;
+  --muted: #9CA3AF;
+  --danger: #EF4444;
+  --danger-color: #EF4444;
+  --warning: #F59E0B;
   --success: #10b981;
+  --success-color: #10b981;
   --info: #3b82f6;
   
   /* Spacing */
@@ -23,7 +30,8 @@
   --space-6: 48px;
   
   /* Layout */
-  --nav-width: 260px;
+  --nav-width: 240px;
+  --header-height: 64px;
   --max-width: 1400px;
   --border-radius: 8px;
   --border-radius-sm: 4px;
@@ -289,4 +297,21 @@ li {
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border-width: 0;
+}
+
+/* =============================================================================
+   ANIMATIONS
+   ============================================================================= */
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
 }

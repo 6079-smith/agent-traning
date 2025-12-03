@@ -1,11 +1,9 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import Modal from '@/components/Modal'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import ErrorAlert from '@/components/ErrorAlert'
 import styles from '@/styles/components.module.css'
-import layoutStyles from '@/styles/layout.module.css'
 import btnStyles from '@/styles/buttons.module.css'
 import formStyles from '@/styles/forms.module.css'
 import * as Icons from 'lucide-react'
@@ -15,8 +13,7 @@ export default function PromptsPage() {
   const [prompts, setPrompts] = useState<PromptVersion[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [editingPrompt, setEditingPrompt] = useState<PromptVersion | null>(null)
+  const [selectedPrompt, setSelectedPrompt] = useState<PromptVersion | null>(null)
   const [formData, setFormData] = useState({
     name: '',
     system_prompt: '',
@@ -24,6 +21,7 @@ export default function PromptsPage() {
     notes: '',
   })
   const [submitting, setSubmitting] = useState(false)
+  const [isCreating, setIsCreating] = useState(false)
 
   useEffect(() => {
     fetchPrompts()
@@ -44,25 +42,30 @@ export default function PromptsPage() {
     }
   }
 
-  function openCreateModal() {
-    setEditingPrompt(null)
+  function startCreate() {
+    setIsCreating(true)
+    setSelectedPrompt(null)
     setFormData({ name: '', system_prompt: '', user_prompt: '', notes: '' })
-    setIsModalOpen(true)
   }
 
-  function openEditModal(prompt: PromptVersion) {
-    setEditingPrompt(prompt)
+  function selectPrompt(prompt: PromptVersion) {
+    setIsCreating(false)
+    setSelectedPrompt(prompt)
     setFormData({
       name: prompt.name,
       system_prompt: prompt.system_prompt,
       user_prompt: prompt.user_prompt,
       notes: prompt.notes || '',
     })
-    setIsModalOpen(true)
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
+  function cancelEdit() {
+    setIsCreating(false)
+    setSelectedPrompt(null)
+    setFormData({ name: '', system_prompt: '', user_prompt: '', notes: '' })
+  }
+
+  async function handleSave() {
     if (!formData.name || !formData.system_prompt || !formData.user_prompt) {
       setError('Please fill in all required fields')
       return
@@ -72,8 +75,8 @@ export default function PromptsPage() {
       setSubmitting(true)
       setError(null)
 
-      const url = editingPrompt ? `/api/prompts/${editingPrompt.id}` : '/api/prompts'
-      const method = editingPrompt ? 'PUT' : 'POST'
+      const url = selectedPrompt ? `/api/prompts/${selectedPrompt.id}` : '/api/prompts'
+      const method = selectedPrompt ? 'PUT' : 'POST'
 
       const res = await fetch(url, {
         method,
@@ -84,7 +87,7 @@ export default function PromptsPage() {
       const data = await res.json()
       if (data.error) throw new Error(data.error)
 
-      setIsModalOpen(false)
+      cancelEdit()
       fetchPrompts()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save prompt')
@@ -119,190 +122,185 @@ export default function PromptsPage() {
     }
   }
 
-  function copyToClipboard(text: string) {
-    navigator.clipboard.writeText(text)
-    alert('Copied to clipboard!')
-  }
-
   if (loading) {
-    return (
-      <div className={layoutStyles.pageContainer}>
-        <LoadingSpinner size="large" message="Loading prompts..." />
-      </div>
-    )
+    return <LoadingSpinner size="large" message="Loading prompts..." />
   }
 
   return (
-    <div className={layoutStyles.pageContainer}>
-      <div className={layoutStyles.pageHeader}>
+    <div>
+      {/* Header */}
+      <div className={styles.promptEditorHeader}>
         <div>
-          <h1>Prompt Versions</h1>
-          <p className={styles.subtitle}>Manage and version control your system prompts</p>
+          <h1>Prompt Editor</h1>
+          <p className={styles.promptEditorSubtitle}>Manage and version control your system prompts</p>
         </div>
-        <button onClick={openCreateModal} className={btnStyles.primary}>
-          <Icons.Plus size={18} />
-          New Prompt
-        </button>
+        <div className={styles.promptEditorActions}>
+          <button onClick={startCreate} className={btnStyles.primary}>
+            <Icons.Plus size={18} />
+            Generate from Training
+          </button>
+          <button onClick={startCreate} className={btnStyles.secondary}>
+            <Icons.FileText size={18} />
+            New Blank Version
+          </button>
+        </div>
       </div>
 
       {error && <ErrorAlert message={error} onDismiss={() => setError(null)} />}
 
-      {prompts.length === 0 ? (
+      {prompts.length === 0 && !isCreating ? (
         <div className={styles.emptyState}>
           <Icons.FileText size={48} />
-          <h3>No prompts yet</h3>
-          <p>Create your first prompt version to get started</p>
-          <button onClick={openCreateModal} className={btnStyles.primary}>
-            <Icons.Plus size={18} />
-            Create Prompt
-          </button>
+          <p>No prompt versions yet.</p>
+          <p>Create your first one!</p>
         </div>
       ) : (
-        <div className={styles.section}>
-          <div className={styles.tableContainer}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Status</th>
-                  <th>Created</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {prompts.map((prompt) => (
-                  <tr key={prompt.id} className={prompt.is_active ? styles.rowHighlight : ''}>
-                    <td>
-                      <strong>{prompt.name}</strong>
-                      {prompt.notes && (
-                        <div className={styles.textMuted}>{prompt.notes}</div>
-                      )}
-                    </td>
-                    <td>
-                      {prompt.is_active ? (
-                        <span className={styles.badgeSuccess}>Active</span>
-                      ) : (
-                        <span className={styles.badgeMuted}>Inactive</span>
-                      )}
-                    </td>
-                    <td>{new Date(prompt.created_at).toLocaleDateString()}</td>
-                    <td>
-                      <div className={styles.actionButtons}>
-                        <button
-                          onClick={() => openEditModal(prompt)}
-                          className={btnStyles.iconButton}
-                          title="Edit"
-                        >
-                          <Icons.Edit size={16} />
-                        </button>
-                        <button
-                          onClick={() => copyToClipboard(prompt.system_prompt)}
-                          className={btnStyles.iconButton}
-                          title="Copy System Prompt"
-                        >
-                          <Icons.Copy size={16} />
-                        </button>
-                        {!prompt.is_active && (
-                          <button
-                            onClick={() => handleActivate(prompt.id)}
-                            className={btnStyles.iconButton}
-                            title="Set as Active"
-                          >
-                            <Icons.CheckCircle size={16} />
-                          </button>
-                        )}
-                        <button
-                          onClick={() => handleDelete(prompt.id)}
-                          className={`${btnStyles.iconButton} ${btnStyles.danger}`}
-                          title="Delete"
-                        >
-                          <Icons.Trash2 size={16} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        <div className={styles.promptEditorGrid}>
+          {/* Left: Prompt List */}
+          <div className={styles.promptList}>
+            <div className={styles.promptListHeader}>
+              <h3>Versions</h3>
+            </div>
+            <div className={styles.promptListItems}>
+              {prompts.map((prompt) => (
+                <div
+                  key={prompt.id}
+                  className={`${styles.promptListItem} ${
+                    selectedPrompt?.id === prompt.id ? styles.promptListItemActive : ''
+                  }`}
+                  onClick={() => selectPrompt(prompt)}
+                >
+                  <div className={styles.promptListItemHeader}>
+                    <strong>{prompt.name}</strong>
+                    {prompt.is_active && (
+                      <span className={styles.promptActiveBadge}>
+                        <Icons.CheckCircle size={14} />
+                        Active
+                      </span>
+                    )}
+                  </div>
+                  {prompt.notes && (
+                    <div className={styles.promptListItemNotes}>{prompt.notes}</div>
+                  )}
+                  <div className={styles.promptListItemMeta}>
+                    {new Date(prompt.created_at).toLocaleDateString()}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Right: Form */}
+          <div className={styles.promptFormPanel}>
+            {!selectedPrompt && !isCreating ? (
+              <div className={styles.promptFormEmpty}>
+                <Icons.FileEdit size={48} />
+                <p>Select a prompt version to edit</p>
+              </div>
+            ) : (
+              <>
+                <div className={styles.promptFormHeader}>
+                  <h2>{isCreating ? 'New Prompt Version' : 'Edit Prompt Version'}</h2>
+                  <div className={styles.promptFormHeaderActions}>
+                    {selectedPrompt && !selectedPrompt.is_active && (
+                      <button
+                        onClick={() => handleActivate(selectedPrompt.id)}
+                        className={btnStyles.secondary}
+                      >
+                        <Icons.CheckCircle size={16} />
+                        Set Active
+                      </button>
+                    )}
+                    {selectedPrompt && (
+                      <button
+                        onClick={() => handleDelete(selectedPrompt.id)}
+                        className={`${btnStyles.secondary} ${btnStyles.danger}`}
+                      >
+                        <Icons.Trash2 size={16} />
+                        Delete
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <div className={styles.promptFormContent}>
+                  <div className={formStyles.formGroup}>
+                    <label className={formStyles.label}>Version name...</label>
+                    <input
+                      type="text"
+                      className={formStyles.input}
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      placeholder="e.g., Customer Service v1"
+                    />
+                  </div>
+
+                  <div className={formStyles.formGroup}>
+                    <label className={formStyles.label}>System Prompt</label>
+                    <div className={styles.promptTextareaHeader}>
+                      <span>Enter your system prompt here...</span>
+                      <button
+                        type="button"
+                        onClick={() => navigator.clipboard.writeText(formData.system_prompt)}
+                        className={btnStyles.iconButton}
+                        title="Copy"
+                      >
+                        <Icons.Copy size={14} />
+                      </button>
+                    </div>
+                    <textarea
+                      className={`${formStyles.textarea} ${styles.promptTextarea}`}
+                      value={formData.system_prompt}
+                      onChange={(e) => setFormData({ ...formData, system_prompt: e.target.value })}
+                      placeholder="Enter the system prompt..."
+                      rows={12}
+                    />
+                  </div>
+
+                  <div className={formStyles.formGroup}>
+                    <label className={formStyles.label}>User Prompt</label>
+                    <div className={styles.promptTextareaHeader}>
+                      <span>Enter your user prompt here... Use placeholders like {'{'}file.thread{'}'}, {'{'}file.to{'}'}, etc.</span>
+                      <button
+                        type="button"
+                        onClick={() => navigator.clipboard.writeText(formData.user_prompt)}
+                        className={btnStyles.iconButton}
+                        title="Copy"
+                      >
+                        <Icons.Copy size={14} />
+                      </button>
+                    </div>
+                    <textarea
+                      className={`${formStyles.textarea} ${styles.promptTextarea}`}
+                      value={formData.user_prompt}
+                      onChange={(e) => setFormData({ ...formData, user_prompt: e.target.value })}
+                      placeholder="Enter the user prompt template..."
+                      rows={12}
+                    />
+                  </div>
+                </div>
+
+                <div className={styles.promptFormFooter}>
+                  <button
+                    onClick={cancelEdit}
+                    className={btnStyles.secondary}
+                    disabled={submitting}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSave}
+                    className={btnStyles.primary}
+                    disabled={submitting}
+                  >
+                    {submitting ? 'Saving...' : 'Save'}
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
-
-      <Modal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title={editingPrompt ? 'Edit Prompt Version' : 'Create Prompt Version'}
-        size="large"
-      >
-        <form onSubmit={handleSubmit}>
-          <div className={formStyles.formGroup}>
-            <label className={formStyles.label}>
-              Name <span className={formStyles.required}>*</span>
-            </label>
-            <input
-              type="text"
-              className={formStyles.input}
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="e.g., Customer Service v1"
-              required
-            />
-          </div>
-
-          <div className={formStyles.formGroup}>
-            <label className={formStyles.label}>
-              System Prompt <span className={formStyles.required}>*</span>
-            </label>
-            <textarea
-              className={formStyles.textarea}
-              value={formData.system_prompt}
-              onChange={(e) => setFormData({ ...formData, system_prompt: e.target.value })}
-              placeholder="Enter the system prompt..."
-              rows={8}
-              required
-            />
-          </div>
-
-          <div className={formStyles.formGroup}>
-            <label className={formStyles.label}>
-              User Prompt <span className={formStyles.required}>*</span>
-            </label>
-            <textarea
-              className={formStyles.textarea}
-              value={formData.user_prompt}
-              onChange={(e) => setFormData({ ...formData, user_prompt: e.target.value })}
-              placeholder="Enter the user prompt template..."
-              rows={8}
-              required
-            />
-          </div>
-
-          <div className={formStyles.formGroup}>
-            <label className={formStyles.label}>Notes</label>
-            <textarea
-              className={formStyles.textarea}
-              value={formData.notes}
-              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              placeholder="Optional notes about this version..."
-              rows={3}
-            />
-          </div>
-
-          <div className={styles.modalFooter}>
-            <button
-              type="button"
-              onClick={() => setIsModalOpen(false)}
-              className={btnStyles.secondary}
-              disabled={submitting}
-            >
-              Cancel
-            </button>
-            <button type="submit" className={btnStyles.primary} disabled={submitting}>
-              {submitting ? 'Saving...' : editingPrompt ? 'Update' : 'Create'}
-            </button>
-          </div>
-        </form>
-      </Modal>
     </div>
   )
 }

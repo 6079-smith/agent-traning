@@ -2,7 +2,6 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import styles from '@/styles/components.module.css'
 import layoutStyles from '@/styles/layout.module.css'
 import * as Icons from 'lucide-react'
 
@@ -12,19 +11,21 @@ export default function Navigation() {
   const isActive = (path: string) => pathname === path
 
   const navItems = [
-    { href: '/', label: 'Dashboard', icon: Icons.Home },
-    { href: '/wizard', label: 'Wizard', icon: Icons.Wand2 },
-    { href: '/prompts', label: 'Prompts', icon: Icons.FileText },
-    { href: '/test-cases', label: 'Test Cases', icon: Icons.TestTube },
+    { href: '/', label: 'Dashboard', icon: Icons.LayoutDashboard },
+    { href: '/wizard', label: 'Training Wizard', icon: Icons.Wand2 },
+    { href: '/prompts', label: 'Prompt Editor', icon: Icons.FileEdit },
+    { href: '/test-cases', label: 'Test Suite', icon: Icons.TestTube2 },
     { href: '/playground', label: 'Playground', icon: Icons.Play },
     { href: '/results', label: 'Results', icon: Icons.BarChart3 },
+    { href: '/evaluator', label: 'Evaluator Rules', icon: Icons.Settings },
+    { href: '/walkthrough', label: 'Walkthrough', icon: Icons.HelpCircle },
   ]
 
   return (
     <nav className={layoutStyles.sidebar}>
       <div className={layoutStyles.sidebarHeader}>
-        <Icons.Sparkles size={24} />
-        <span className={layoutStyles.sidebarTitle}>CS Agent Optimizer</span>
+        <div className={layoutStyles.sidebarBrand}>CS Agent Optimizer</div>
+        <div className={layoutStyles.sidebarSubtitle}>Prompt Training Workbench</div>
       </div>
       <div className={layoutStyles.sidebarNav}>
         {navItems.map((item) => {
@@ -37,7 +38,7 @@ export default function Navigation() {
                 isActive(item.href) ? layoutStyles.sidebarLinkActive : ''
               }`}
             >
-              <Icon size={20} />
+              <Icon size={18} />
               <span>{item.label}</span>
             </Link>
           )

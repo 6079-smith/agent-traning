@@ -11,9 +11,10 @@ export const dynamic = 'force-dynamic'
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const result = await queryOne<TestResult>(
       `SELECT r.*, 
               tc.name as test_case_name,
@@ -22,7 +23,7 @@ export async function GET(
        LEFT JOIN test_cases tc ON r.test_case_id = tc.id
        LEFT JOIN prompt_versions pv ON r.prompt_version_id = pv.id
        WHERE r.id = $1`,
-      [params.id]
+      [id]
     )
 
     if (!result) {
