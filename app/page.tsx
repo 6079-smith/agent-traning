@@ -30,11 +30,31 @@ export default function Home() {
 
   useEffect(() => {
     fetchDashboardStats()
+
+    // Re-fetch when page becomes visible (user navigates back) - silent refresh
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchDashboardStats(false)
+      }
+    }
+
+    // Re-fetch when window gains focus - silent refresh
+    const handleFocus = () => {
+      fetchDashboardStats(false)
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    window.addEventListener('focus', handleFocus)
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('focus', handleFocus)
+    }
   }, [])
 
-  async function fetchDashboardStats() {
+  async function fetchDashboardStats(showLoading = true) {
     try {
-      setLoading(true)
+      if (showLoading) setLoading(true)
       setError(null)
 
       // Fetch all data in parallel

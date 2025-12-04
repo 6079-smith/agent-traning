@@ -19,12 +19,17 @@ interface WizardStatus {
  */
 export async function GET() {
   try {
+    // Fetch wizard steps (the actual steps shown in the UI)
+    const steps = await queryMany<{ category: string }>(
+      'SELECT category FROM wizard_steps ORDER BY sort_order'
+    )
+
     // Fetch all knowledge base entries (questions)
     const entries = await queryMany<{ category: string; key: string; value: string }>(
       'SELECT category, key, value FROM knowledge_base ORDER BY category'
     )
 
-    if (entries.length === 0) {
+    if (steps.length === 0) {
       return NextResponse.json({
         data: {
           isComplete: false,
@@ -37,16 +42,16 @@ export async function GET() {
       } as ApiResponse<WizardStatus>)
     }
 
-    // Get unique categories (steps)
-    const categories = Array.from(new Set(entries.map(e => e.category)))
-    const totalSteps = categories.length
+    // Only count categories that have wizard steps
+    const stepCategories = steps.map(s => s.category)
+    const totalSteps = stepCategories.length
 
     // Count questions and answered questions per step
     let totalQuestions = 0
     let answeredQuestions = 0
     let completedSteps = 0
 
-    for (const category of categories) {
+    for (const category of stepCategories) {
       const categoryEntries = entries.filter(e => e.category === category)
       const categoryTotal = categoryEntries.length
       const categoryAnswered = categoryEntries.filter(e => e.value && e.value.trim() !== '').length
@@ -54,8 +59,8 @@ export async function GET() {
       totalQuestions += categoryTotal
       answeredQuestions += categoryAnswered
       
-      // A step is complete if all its questions are answered
-      if (categoryAnswered === categoryTotal && categoryTotal > 0) {
+      // A step is complete if all its questions are answered (or has no questions yet)
+      if (categoryTotal === 0 || categoryAnswered === categoryTotal) {
         completedSteps++
       }
     }
@@ -64,7 +69,7 @@ export async function GET() {
     const isComplete = completedSteps === totalSteps && totalSteps > 0
     const percentComplete = totalQuestions > 0 
       ? Math.round((answeredQuestions / totalQuestions) * 100) 
-      : 0
+      : (totalSteps > 0 ? 100 : 0) // If no questions but has steps, consider 100%
 
     return NextResponse.json({
       data: {
