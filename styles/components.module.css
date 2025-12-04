@@ -3341,3 +3341,60 @@
 .iconWarning {
   color: #eab308;
 }
+
+/* Manual Suggestion Section */
+.manualSuggestionSection {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.manualSuggestionTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #4471BA;
+  margin-bottom: 12px;
+}
+
+.manualSuggestionForm {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.manualStepInput {
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  color: #fff;
+  font-size: 14px;
+}
+
+.manualStepInput:focus {
+  outline: none;
+  border-color: #4471BA;
+}
+
+.manualSuggestionInput {
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  color: #fff;
+  font-size: 14px;
+  resize: vertical;
+  min-height: 80px;
+}
+
+.manualSuggestionInput:focus {
+  outline: none;
+  border-color: #4471BA;
+}
+
+.manualSuggestionForm button {
+  align-self: flex-start;
+}

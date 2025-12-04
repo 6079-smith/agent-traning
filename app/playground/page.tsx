@@ -56,6 +56,10 @@ export default function PlaygroundPage() {
   const [applyingId, setApplyingId] = useState<string | null>(null)
   const [appliedIds, setAppliedIds] = useState<Set<string>>(new Set())
   const [generateProgress, setGenerateProgress] = useState(0)
+  const [evaluateProgress, setEvaluateProgress] = useState(0)
+  const [manualSuggestion, setManualSuggestion] = useState('')
+  const [manualStepTitle, setManualStepTitle] = useState('')
+  const [applyingManual, setApplyingManual] = useState(false)
 
   // Save state to localStorage whenever it changes
   useEffect(() => {
@@ -148,6 +152,8 @@ export default function PlaygroundPage() {
       setGenerating(true)
       setGenerateProgress(0)
       setError(null)
+      setSuggestions(null) // Clear old suggestions
+      setAppliedIds(new Set()) // Clear applied state
 
       // Start progress animation
       const progressInterval = setInterval(() => {
@@ -191,10 +197,19 @@ export default function PlaygroundPage() {
 
     try {
       setEvaluating(true)
+      setEvaluateProgress(0)
       setError(null)
       setSuggestions(null) // Clear previous suggestions
       setAppliedIds(new Set()) // Clear applied state
       
+      // Start progress animation
+      const progressInterval = setInterval(() => {
+        setEvaluateProgress(prev => {
+          if (prev >= 90) return prev
+          return prev + Math.random() * 12
+        })
+      }, 500)
+
       // Get expected behavior from selected test case if available
       const selectedTestCase = testCases.find(tc => tc.id === selectedTestCaseId)
       const expectedBehavior = selectedTestCase?.expected_behavior
@@ -209,6 +224,9 @@ export default function PlaygroundPage() {
         }),
       })
 
+      clearInterval(progressInterval)
+      setEvaluateProgress(100)
+
       const data = await res.json()
       if (data.error) throw new Error(data.error)
       
@@ -220,6 +238,7 @@ export default function PlaygroundPage() {
       setError(err instanceof Error ? err.message : 'Failed to evaluate response')
     } finally {
       setEvaluating(false)
+      setTimeout(() => setEvaluateProgress(0), 300)
     }
   }
 
@@ -253,6 +272,8 @@ export default function PlaygroundPage() {
   async function applySuggestion(suggestion: Suggestion) {
     try {
       setApplyingId(suggestion.id)
+      console.log('Applying suggestion with promptVersionId:', selectedPromptId)
+      
       const res = await fetch('/api/suggestions/apply', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -265,20 +286,24 @@ export default function PlaygroundPage() {
           promptVersionId: selectedPromptId, // Also update the current prompt
         }),
       })
-
+      
       const data = await res.json()
+      console.log('Apply response:', data)
+      
       if (data.error) throw new Error(data.error)
       
       // Mark as applied
       setAppliedIds(prev => new Set([...prev, suggestion.id]))
       
-      // If prompt was updated, refresh the prompts list
+      // If prompt was updated, refresh the prompts list and notify user
       if (data.promptUpdated) {
         const promptsRes = await fetch('/api/prompts')
         const promptsData = await promptsRes.json()
         if (promptsData.data) {
           setPrompts(promptsData.data)
         }
+        // Don't clear the response - user may want to save the result first
+        alert('✅ Improvement applied to your prompt!\n\nYou can Save Result now, then Generate Response again to test the improvement.')
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to apply suggestion')
@@ -293,6 +318,55 @@ export default function PlaygroundPage() {
       ...suggestions,
       suggestions: suggestions.suggestions.filter(s => s.id !== suggestionId)
     })
+  }
+
+  async function applyManualSuggestion() {
+    if (!manualSuggestion.trim() || !manualStepTitle.trim()) {
+      setError('Please enter both a step title and suggestion content')
+      return
+    }
+
+    try {
+      setApplyingManual(true)
+      setError(null)
+      
+      const stepCategory = manualStepTitle.toLowerCase().replace(/\s+/g, '_')
+      const questionTitle = `manual_improvement_${Date.now()}`
+      
+      const res = await fetch('/api/suggestions/apply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'add_to_existing',
+          stepTitle: manualStepTitle,
+          stepCategory,
+          questionTitle,
+          questionValue: manualSuggestion,
+          promptVersionId: selectedPromptId,
+        }),
+      })
+
+      const data = await res.json()
+      if (data.error) throw new Error(data.error)
+
+      // Clear the form
+      setManualSuggestion('')
+      setManualStepTitle('')
+
+      // Notify user
+      if (data.promptUpdated) {
+        const promptsRes = await fetch('/api/prompts')
+        const promptsData = await promptsRes.json()
+        if (promptsData.data) {
+          setPrompts(promptsData.data)
+        }
+        alert('✅ Manual improvement applied to your prompt!\n\nYou can Save Result now, then Generate Response again to test the improvement.')
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to apply manual suggestion')
+    } finally {
+      setApplyingManual(false)
+    }
   }
 
   async function handleSaveResult() {
@@ -453,21 +527,35 @@ export default function PlaygroundPage() {
           <div className={styles.panelFooter}>
             <button
               onClick={handleEvaluate}
-              className={btnStyles.secondary}
+              className={`${btnStyles.primary} ${evaluating ? btnStyles.generating : ''}`}
               disabled={!generatedResponse || evaluating}
-              style={{ width: 'auto', minWidth: '140px', maxWidth: 'fit-content' }}
+              style={{ 
+                width: 'auto', 
+                minWidth: '160px', 
+                maxWidth: 'fit-content',
+                position: 'relative',
+                overflow: 'hidden'
+              }}
             >
-              {evaluating ? (
-                <>
-                  <Icons.Loader2 size={18} className="animate-spin" />
-                  Evaluating...
-                </>
-              ) : (
-                <>
-                  <Icons.CheckCircle size={18} />
-                  Evaluate
-                </>
+              {evaluating && (
+                <span 
+                  className={btnStyles.progressBar}
+                  style={{ width: `${evaluateProgress}%` }}
+                />
               )}
+              <span style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {evaluating ? (
+                  <>
+                    <Icons.Loader2 size={18} className="animate-spin" />
+                    Evaluating... {Math.round(evaluateProgress)}%
+                  </>
+                ) : (
+                  <>
+                    <Icons.CheckCircle size={18} />
+                    Evaluate
+                  </>
+                )}
+              </span>
             </button>
             {selectedTestCaseId && generatedResponse && (
               <button 
@@ -643,6 +731,49 @@ export default function PlaygroundPage() {
                   </div>
                 )
               })}
+            </div>
+          )}
+
+          {/* Manual Suggestion Input */}
+          {evaluation && (
+            <div className={styles.manualSuggestionSection}>
+              <h4 className={styles.manualSuggestionTitle}>
+                <Icons.PenLine size={16} />
+                Add Manual Improvement
+              </h4>
+              <div className={styles.manualSuggestionForm}>
+                <input
+                  type="text"
+                  placeholder="Step/Category (e.g., 'Refund Handling')"
+                  value={manualStepTitle}
+                  onChange={(e) => setManualStepTitle(e.target.value)}
+                  className={styles.manualStepInput}
+                />
+                <textarea
+                  placeholder="Enter your improvement suggestion... (e.g., 'Never promise specific refund timelines. Instead say: Your refund will be processed according to our standard procedures.')"
+                  value={manualSuggestion}
+                  onChange={(e) => setManualSuggestion(e.target.value)}
+                  className={styles.manualSuggestionInput}
+                  rows={3}
+                />
+                <button
+                  onClick={applyManualSuggestion}
+                  className={btnStyles.success}
+                  disabled={applyingManual || !manualSuggestion.trim() || !manualStepTitle.trim()}
+                >
+                  {applyingManual ? (
+                    <>
+                      <Icons.Loader2 size={14} className="animate-spin" />
+                      Applying...
+                    </>
+                  ) : (
+                    <>
+                      <Icons.Check size={14} />
+                      Apply Manual Improvement
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           )}
         </div>

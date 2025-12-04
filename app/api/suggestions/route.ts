@@ -108,12 +108,16 @@ Respond with a JSON object:
 \`\`\`
 
 Guidelines:
+- **MAXIMUM 3 SUGGESTIONS** - Focus on the most impactful improvements only
+- **NO REPETITION** - If multiple issues stem from the same root cause, consolidate into ONE comprehensive suggestion
+- **ONE suggestion per rule violation** - Don't create separate suggestions for examples, rules, and guidelines about the same issue
 - Only suggest improvements that would prevent the identified issues
 - Be specific and actionable
 - Use existing categories when possible
 - Only suggest new steps when truly necessary
 - Priority should be "high" for rule violations, "medium" for quality issues, "low" for minor improvements
-- Generate unique IDs using format "sug_" + random string`
+- Generate unique IDs using format "sug_" + random string
+- If the score is 80+, suggest at most 1 improvement or none at all`
 
     const userPrompt = `## Evaluation Results
 

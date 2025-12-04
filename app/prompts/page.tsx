@@ -138,8 +138,20 @@ export default function PromptsPage() {
       const data = await res.json()
       if (data.error) throw new Error(data.error)
 
-      cancelEdit()
-      fetchPrompts()
+      // Refresh prompts list
+      await fetchPrompts()
+      
+      // Keep the saved prompt selected (update selectedPrompt with new data)
+      if (data.data) {
+        setSelectedPrompt(data.data)
+        setFormData({
+          name: data.data.name,
+          system_prompt: data.data.system_prompt,
+          user_prompt: data.data.user_prompt,
+          notes: data.data.notes || '',
+        })
+      }
+      setIsCreating(false)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save prompt')
     } finally {

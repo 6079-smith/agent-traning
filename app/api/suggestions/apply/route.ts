@@ -86,6 +86,7 @@ export async function POST(request: NextRequest) {
 
     // If a prompt version ID was provided, also append to that prompt's system_prompt
     let promptUpdated = false
+    console.log('promptVersionId received:', promptVersionId)
     if (promptVersionId) {
       try {
         // Get the current prompt
@@ -93,6 +94,7 @@ export async function POST(request: NextRequest) {
           'SELECT system_prompt FROM prompt_versions WHERE id = $1',
           [promptVersionId]
         )
+        console.log('Found prompt:', prompt ? 'yes' : 'no')
 
         if (prompt) {
           // Build the improvement text to append
@@ -102,7 +104,7 @@ export async function POST(request: NextRequest) {
           const updatedPrompt = prompt.system_prompt + improvementText
           
           await queryOne(
-            'UPDATE prompt_versions SET system_prompt = $1, updated_at = NOW() WHERE id = $2',
+            'UPDATE prompt_versions SET system_prompt = $1 WHERE id = $2',
             [updatedPrompt, promptVersionId]
           )
           promptUpdated = true
