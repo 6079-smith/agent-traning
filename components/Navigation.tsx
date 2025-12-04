@@ -14,7 +14,7 @@ export default function Navigation() {
     { href: '/', label: 'Dashboard', icon: Icons.LayoutDashboard },
     { href: '/wizard', label: 'Training Wizard', icon: Icons.Wand2 },
     { href: '/prompts', label: 'Prompt Editor', icon: Icons.FileEdit },
-    { href: '/test-cases', label: 'Test Suite', icon: Icons.TestTube2 },
+    { href: '/test-cases', label: 'Customer Emails', icon: Icons.Mail },
     { href: '/playground', label: 'Playground', icon: Icons.Play },
     { href: '/results', label: 'Results', icon: Icons.BarChart3 },
     { href: '/evaluator', label: 'Evaluator Rules', icon: Icons.Settings },

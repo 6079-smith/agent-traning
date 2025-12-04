@@ -103,6 +103,12 @@
   color: var(--warning);
 }
 
+.statusMeta {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
 /* Quick Actions Section */
 .quickActionsSection {
   margin-top: 40px;
@@ -646,21 +652,21 @@
   border-radius: 4px;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 12px;
   background: rgba(244, 67, 54, 0.15);
   border: 1px solid rgba(244, 67, 54, 0.5);
   color: #ff6b6b;
 }
 
-.errorAlertIcon {
-  flex-shrink: 0;
-}
-
-.errorAlertMessage {
+.errorAlertContent {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   flex: 1;
 }
 
-.errorAlertDismiss {
+.errorAlertClose {
   background: none;
   border: none;
   color: #ff6b6b;
@@ -669,9 +675,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
-.errorAlertDismiss:hover {
+.errorAlertClose:hover {
   opacity: 0.8;
 }
 
@@ -777,6 +784,157 @@
 }
 
 /* =============================================================================
+   DATA TABLE
+   ============================================================================= */
+
+.tableContainer {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.table th {
+  text-align: left;
+  padding: 12px 16px;
+  font-weight: 600;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border-color);
+  white-space: nowrap;
+}
+
+.table td {
+  padding: 16px;
+  border-bottom: 1px solid var(--border-color);
+  vertical-align: top;
+}
+
+.table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.table th:nth-child(1),
+.table td:nth-child(1) {
+  width: 25%;
+  min-width: 150px;
+}
+
+.table th:nth-child(2),
+.table td:nth-child(2) {
+  width: 30%;
+  min-width: 180px;
+}
+
+.table th:nth-child(3),
+.table td:nth-child(3) {
+  width: 15%;
+  min-width: 100px;
+}
+
+.table th:nth-child(4),
+.table td:nth-child(4) {
+  width: 15%;
+  min-width: 100px;
+}
+
+.table th:nth-child(5),
+.table td:nth-child(5) {
+  width: 15%;
+  min-width: 100px;
+  text-align: center;
+}
+
+.actionButtons {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+/* =============================================================================
+   TEST CASES CARDS
+   ============================================================================= */
+
+.testCasesList {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.testCaseCard {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 20px;
+  transition: border-color 0.2s ease;
+}
+
+.testCaseCard:hover {
+  border-color: #4a90e2;
+}
+
+.testCaseHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.testCaseInfo {
+  flex: 1;
+}
+
+.testCaseInfo h3 {
+  margin-bottom: 4px;
+}
+
+.testCaseSubject {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.testCaseActions {
+  display: flex;
+  gap: 8px;
+}
+
+.testCaseMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.testCaseMetaItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.testCaseTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.testCasePreview {
+  font-size: 13px;
+  color: var(--text-muted);
+  background: rgba(0, 0, 0, 0.1);
+  padding: 12px;
+  border-radius: 6px;
+  line-height: 1.5;
+  font-family: monospace;
+  white-space: pre-wrap;
+}
+
+/* =============================================================================
    MODAL/DIALOG
    ============================================================================= */
 
@@ -801,8 +959,13 @@
   max-width: 600px;
   width: 100%;
   max-height: 90vh;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.modalLarge {
+  max-width: 800px;
 }
 
 .modalHeader {
@@ -838,6 +1001,8 @@
 
 .modalBody {
   padding: 24px;
+  overflow-y: auto;
+  flex: 1;
 }
 
 .modalFooter {
@@ -1184,11 +1349,31 @@
    PLAYGROUND
    ============================================ */
 
+.playgroundControls {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 20px;
+  padding: 20px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+}
+
+.controlGroup {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.controlGroup h3 {
+  margin-bottom: 0;
+}
+
 .playgroundGrid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 20px;
-  margin-top: 20px;
 }
 
 .playgroundPanel {
@@ -1207,21 +1392,31 @@
   align-items: center;
   padding: 16px 20px;
   border-bottom: 1px solid var(--border-color);
-  background: rgba(0, 0, 0, 0.02);
 }
 
 .panelHeader h3 {
   margin: 0;
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 18px;
+  font-weight: 700;
+  color: #3b82f6;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.panelHeader h3::before {
+  content: '';
+  width: 4px;
+  height: 20px;
+  background: #3b82f6;
+  border-radius: 2px;
 }
 
 .panelFooter {
   display: flex;
-  gap: 8px;
+  gap: 12px;
   padding: 16px 20px;
   border-top: 1px solid var(--border-color);
-  background: rgba(0, 0, 0, 0.02);
 }
 
 .panelFooter button {
@@ -1965,6 +2160,11 @@
 }
 
 @media (max-width: 1200px) {
+  .playgroundControls {
+    flex-direction: column;
+    gap: 16px;
+  }
+
   .playgroundGrid {
     grid-template-columns: 1fr;
   }
@@ -2702,4 +2902,400 @@
   .mainActionArrow {
     display: none;
   }
+}
+
+/* =============================================================================
+   RESULTS PAGE - Compact Layout
+   ============================================================================= */
+
+.resultsControlsCard {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+}
+
+.resultsStatsRow {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.resultsStat {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.resultsStatLabel {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.resultsStatValue {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.resultsStatDivider {
+  width: 1px;
+  height: 32px;
+  background: var(--border-color);
+}
+
+.resultsFilters {
+  display: flex;
+  gap: 12px;
+  margin-left: auto;
+}
+
+.resultsFilters select {
+  min-width: 160px;
+}
+
+.resultsList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.resultCard {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  overflow: hidden;
+  transition: border-color 0.2s ease;
+}
+
+.resultCard:hover {
+  border-color: #4a90e2;
+}
+
+.resultCardHeader {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 16px 20px;
+  cursor: pointer;
+}
+
+.resultCardScore {
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+  min-width: 80px;
+}
+
+.resultCardScore .scoreValue {
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.resultCardScore .scoreLabel {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.resultCardInfo {
+  flex: 1;
+}
+
+.resultCardInfo h3 {
+  margin-bottom: 4px;
+}
+
+.resultCardMeta {
+  display: flex;
+  gap: 16px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.resultCardMeta span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.resultCardExpanded {
+  padding: 0 20px 20px;
+  border-top: 1px solid var(--border-color);
+  margin-top: 0;
+  padding-top: 16px;
+}
+
+.resultCardSection {
+  margin-bottom: 16px;
+}
+
+.resultCardSection:last-child {
+  margin-bottom: 0;
+}
+
+.resultCardSection h4 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin: 0 0 8px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.resultCardContent {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-primary);
+  background: rgba(0, 0, 0, 0.1);
+  padding: 12px;
+  border-radius: 6px;
+  white-space: pre-wrap;
+}
+
+.resultCardGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+.ruleChecksList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ruleCheckItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  padding: 6px 12px;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+}
+
+@media (max-width: 900px) {
+  .resultsStatsRow {
+    flex-wrap: wrap;
+  }
+  
+  .resultsFilters {
+    width: 100%;
+    margin-top: 12px;
+  }
+  
+  .resultsFilters select {
+    flex: 1;
+  }
+}
+
+/* =============================================================================
+   IMPROVEMENT SUGGESTIONS PANEL
+   ============================================================================= */
+
+.suggestionsPanel {
+  margin-top: 24px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.suggestionsPanelHeader {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color);
+  background: rgba(234, 179, 8, 0.05);
+}
+
+.suggestionsTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.suggestionsTitleRow h3 {
+  margin: 0;
+}
+
+.suggestionsSummary {
+  margin: 8px 0 0 0;
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.suggestionsLoading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  gap: 12px;
+  color: var(--text-muted);
+}
+
+.suggestionsList {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  background: var(--border-color);
+}
+
+.suggestionCard {
+  background: var(--card-bg);
+  padding: 16px 20px;
+  transition: background 0.2s ease;
+}
+
+.suggestionCard:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.suggestionApplied {
+  opacity: 0.6;
+  background: rgba(34, 197, 94, 0.05);
+}
+
+.suggestionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.suggestionMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.suggestionPriority {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+.priorityHigh {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+.priorityMedium {
+  background: rgba(234, 179, 8, 0.15);
+  color: #eab308;
+}
+
+.priorityLow {
+  background: rgba(59, 130, 246, 0.15);
+  color: #3b82f6;
+}
+
+.suggestionType {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--text-muted);
+  padding: 3px 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+}
+
+.suggestionRule {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #ef4444;
+  padding: 3px 8px;
+  background: rgba(239, 68, 68, 0.1);
+  border-radius: 4px;
+}
+
+.suggestionActions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.suggestionActions button {
+  padding: 6px 12px;
+  font-size: 13px;
+}
+
+.suggestionAppliedBadge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #22c55e;
+  font-weight: 500;
+}
+
+.suggestionContent {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.suggestionTarget {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.suggestionTarget strong {
+  color: var(--text-primary);
+}
+
+.suggestionEntry {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 6px;
+  padding: 12px;
+  border-left: 3px solid #3b82f6;
+}
+
+.suggestionEntryTitle {
+  font-size: 14px;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+
+.suggestionEntryValue {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.suggestionReasoning {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-muted);
+  font-style: italic;
+  line-height: 1.5;
+}
+
+.suggestionReasoning svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+/* Icon Colors */
+.iconSuccess {
+  color: #22c55e;
+}
+
+.iconDanger {
+  color: #ef4444;
+}
+
+.iconWarning {
+  color: #eab308;
 }

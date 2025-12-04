@@ -155,8 +155,8 @@ export default function TestCasesPage() {
     <div className={layoutStyles.pageContainer}>
       <div className={layoutStyles.pageHeader}>
         <div>
-          <h1>Test Cases</h1>
-          <p className={styles.subtitle}>Manage email examples for testing prompts</p>
+          <h1>Customer Emails</h1>
+          <p className={styles.subtitle}>Manage sample customer emails for testing prompts</p>
         </div>
         <button onClick={openCreateModal} className={btnStyles.primary}>
           <Icons.Plus size={18} />
@@ -187,86 +187,109 @@ export default function TestCasesPage() {
       {testCases.length === 0 ? (
         <div className={styles.emptyState}>
           <Icons.TestTube size={48} />
-          <h3>No test cases yet</h3>
-          <p>Create your first test case to start testing prompts</p>
+          <h3>No customer emails yet</h3>
+          <p>Add your first customer email to start testing prompts</p>
           <button onClick={openCreateModal} className={btnStyles.primary}>
             <Icons.Plus size={18} />
             Create Test Case
           </button>
         </div>
       ) : (
-        <div className={styles.section}>
-          <div className={styles.tableContainer}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Subject</th>
-                  <th>Tags</th>
-                  <th>Created</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {testCases.map((testCase) => (
-                  <tr key={testCase.id}>
-                    <td>
-                      <strong>{testCase.name}</strong>
-                      {testCase.customer_name && (
-                        <div className={styles.textMuted}>
-                          {testCase.customer_name}
-                          {testCase.customer_email && ` (${testCase.customer_email})`}
-                        </div>
-                      )}
-                    </td>
-                    <td>{testCase.subject || '-'}</td>
-                    <td>
-                      {testCase.tags && testCase.tags.length > 0 ? (
-                        <div className={styles.tagList}>
-                          {testCase.tags.map((tag) => (
-                            <span key={tag} className={styles.tag}>
-                              {tag}
-                            </span>
-                          ))}
-                        </div>
-                      ) : (
-                        '-'
-                      )}
-                    </td>
-                    <td>{new Date(testCase.created_at).toLocaleDateString()}</td>
-                    <td>
-                      <div className={styles.actionButtons}>
-                        <button
-                          onClick={() => openEditModal(testCase)}
-                          className={btnStyles.iconButton}
-                          title="Edit"
-                        >
-                          <Icons.Edit size={16} />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(testCase.id)}
-                          className={`${btnStyles.iconButton} ${btnStyles.danger}`}
-                          title="Delete"
-                        >
-                          <Icons.Trash2 size={16} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+        <div className={styles.testCasesList}>
+          {testCases.map((testCase) => (
+            <div key={testCase.id} className={styles.testCaseCard}>
+              <div className={styles.testCaseHeader}>
+                <div className={styles.testCaseInfo}>
+                  <h3 className={formStyles.sectionLabel}>{testCase.name}</h3>
+                  {testCase.subject && (
+                    <p className={styles.testCaseSubject}>{testCase.subject}</p>
+                  )}
+                </div>
+                <div className={styles.testCaseActions}>
+                  <button
+                    onClick={() => openEditModal(testCase)}
+                    className={formStyles.iconButton}
+                    title="Edit"
+                  >
+                    <Icons.Pencil size={16} />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(testCase.id)}
+                    className={`${formStyles.iconButton} ${formStyles.iconButtonDanger}`}
+                    title="Delete"
+                  >
+                    <Icons.Trash2 size={16} />
+                  </button>
+                </div>
+              </div>
+              
+              <div className={styles.testCaseMeta}>
+                {testCase.customer_name && (
+                  <span className={styles.testCaseMetaItem}>
+                    <Icons.User size={14} />
+                    {testCase.customer_name}
+                  </span>
+                )}
+                {testCase.order_number && (
+                  <span className={styles.testCaseMetaItem}>
+                    <Icons.Package size={14} />
+                    {testCase.order_number}
+                  </span>
+                )}
+                <span className={styles.testCaseMetaItem}>
+                  <Icons.Calendar size={14} />
+                  {new Date(testCase.created_at).toLocaleDateString()}
+                </span>
+              </div>
+
+              {testCase.tags && testCase.tags.length > 0 && (
+                <div className={styles.testCaseTags}>
+                  {testCase.tags.map((tag) => (
+                    <span key={tag} className={styles.tag}>
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {testCase.email_thread && (
+                <div className={styles.testCasePreview}>
+                  {testCase.email_thread.substring(0, 150)}
+                  {testCase.email_thread.length > 150 && '...'}
+                </div>
+              )}
+            </div>
+          ))}
         </div>
       )}
 
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title={editingTestCase ? 'Edit Test Case' : 'Create Test Case'}
+        title={editingTestCase ? 'Edit Customer Email' : 'Add Customer Email'}
         size="large"
+        footer={
+          <>
+            <button
+              type="button"
+              onClick={() => setIsModalOpen(false)}
+              className={btnStyles.secondary}
+              disabled={submitting}
+            >
+              Cancel
+            </button>
+            <button 
+              type="submit" 
+              form="testCaseForm"
+              className={btnStyles.primary} 
+              disabled={submitting}
+            >
+              {submitting ? 'Saving...' : editingTestCase ? 'Update' : 'Save'}
+            </button>
+          </>
+        }
       >
-        <form onSubmit={handleSubmit}>
+        <form id="testCaseForm" onSubmit={handleSubmit}>
           <div className={formStyles.formGroup}>
             <label className={formStyles.label}>
               Name <span className={formStyles.required}>*</span>
@@ -387,19 +410,6 @@ export default function TestCasesPage() {
             )}
           </div>
 
-          <div className={styles.modalFooter}>
-            <button
-              type="button"
-              onClick={() => setIsModalOpen(false)}
-              className={btnStyles.secondary}
-              disabled={submitting}
-            >
-              Cancel
-            </button>
-            <button type="submit" className={btnStyles.primary} disabled={submitting}>
-              {submitting ? 'Saving...' : editingTestCase ? 'Update' : 'Create'}
-            </button>
-          </div>
         </form>
       </Modal>
     </div>

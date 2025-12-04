@@ -11,6 +11,33 @@ import * as Icons from 'lucide-react'
 import type { PromptVersion, TestCase } from '@/types/database'
 import type { GenerateResponse, EvaluateResponse } from '@/types/api'
 
+const STORAGE_KEY = 'playground_state'
+
+interface Suggestion {
+  id: string
+  type: 'add_to_existing' | 'new_step'
+  stepTitle: string
+  stepCategory?: string
+  questionTitle: string
+  questionValue: string
+  reasoning: string
+  priority: 'high' | 'medium' | 'low'
+  ruleViolated?: string
+}
+
+interface SuggestionsResponse {
+  suggestions: Suggestion[]
+  summary: string
+}
+
+interface PlaygroundState {
+  selectedPromptId: number | null
+  selectedTestCaseId: number | null
+  emailThread: string
+  generatedResponse: string
+  evaluation: EvaluateResponse | null
+}
+
 export default function PlaygroundPage() {
   const [prompts, setPrompts] = useState<PromptVersion[]>([])
   const [testCases, setTestCases] = useState<TestCase[]>([])
@@ -23,6 +50,25 @@ export default function PlaygroundPage() {
   const [generating, setGenerating] = useState(false)
   const [evaluating, setEvaluating] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [stateRestored, setStateRestored] = useState(false)
+  const [suggestions, setSuggestions] = useState<SuggestionsResponse | null>(null)
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false)
+  const [applyingId, setApplyingId] = useState<string | null>(null)
+  const [appliedIds, setAppliedIds] = useState<Set<string>>(new Set())
+
+  // Save state to localStorage whenever it changes
+  useEffect(() => {
+    if (!stateRestored) return // Don't save until we've restored
+    
+    const state: PlaygroundState = {
+      selectedPromptId,
+      selectedTestCaseId,
+      emailThread,
+      generatedResponse,
+      evaluation,
+    }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+  }, [selectedPromptId, selectedTestCaseId, emailThread, generatedResponse, evaluation, stateRestored])
 
   useEffect(() => {
     fetchData()
@@ -41,15 +87,39 @@ export default function PlaygroundPage() {
       setPrompts(promptsData.data || [])
       setTestCases(testCasesData.data || [])
       
-      // Auto-select active prompt
-      const activePrompt = (promptsData.data || []).find((p: PromptVersion) => p.is_active)
-      if (activePrompt) {
-        setSelectedPromptId(activePrompt.id)
+      // Try to restore saved state from localStorage
+      const savedState = localStorage.getItem(STORAGE_KEY)
+      if (savedState) {
+        try {
+          const state: PlaygroundState = JSON.parse(savedState)
+          // Only restore if the prompt still exists
+          const promptExists = (promptsData.data || []).some((p: PromptVersion) => p.id === state.selectedPromptId)
+          if (promptExists && state.selectedPromptId) {
+            setSelectedPromptId(state.selectedPromptId)
+          }
+          // Only restore test case if it still exists
+          const testCaseExists = (testCasesData.data || []).some((tc: TestCase) => tc.id === state.selectedTestCaseId)
+          if (testCaseExists && state.selectedTestCaseId) {
+            setSelectedTestCaseId(state.selectedTestCaseId)
+          }
+          if (state.emailThread) setEmailThread(state.emailThread)
+          if (state.generatedResponse) setGeneratedResponse(state.generatedResponse)
+          if (state.evaluation) setEvaluation(state.evaluation)
+        } catch {
+          // Invalid saved state, ignore
+        }
+      } else {
+        // No saved state - auto-select active prompt
+        const activePrompt = (promptsData.data || []).find((p: PromptVersion) => p.is_active)
+        if (activePrompt) {
+          setSelectedPromptId(activePrompt.id)
+        }
       }
     } catch (err) {
       setError('Failed to load data')
     } finally {
       setLoading(false)
+      setStateRestored(true)
     }
   }
 
@@ -107,6 +177,9 @@ export default function PlaygroundPage() {
     try {
       setEvaluating(true)
       setError(null)
+      setSuggestions(null) // Clear previous suggestions
+      setAppliedIds(new Set()) // Clear applied state
+      
       const res = await fetch('/api/evaluator/evaluate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -120,11 +193,76 @@ export default function PlaygroundPage() {
       if (data.error) throw new Error(data.error)
       
       setEvaluation(data.data)
+      
+      // Automatically fetch suggestions after evaluation
+      fetchSuggestions(data.data)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to evaluate response')
     } finally {
       setEvaluating(false)
     }
+  }
+
+  async function fetchSuggestions(evalData: EvaluateResponse) {
+    try {
+      setLoadingSuggestions(true)
+      const res = await fetch('/api/suggestions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          emailThread,
+          agentResponse: generatedResponse,
+          evaluation: evalData,
+        }),
+      })
+
+      const data = await res.json()
+      if (data.error) {
+        console.error('Failed to fetch suggestions:', data.error)
+        return
+      }
+      
+      setSuggestions(data.data)
+    } catch (err) {
+      console.error('Failed to fetch suggestions:', err)
+    } finally {
+      setLoadingSuggestions(false)
+    }
+  }
+
+  async function applySuggestion(suggestion: Suggestion) {
+    try {
+      setApplyingId(suggestion.id)
+      const res = await fetch('/api/suggestions/apply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: suggestion.type,
+          stepTitle: suggestion.stepTitle,
+          stepCategory: suggestion.stepCategory || suggestion.stepTitle.toLowerCase().replace(/\s+/g, '_'),
+          questionTitle: suggestion.questionTitle,
+          questionValue: suggestion.questionValue,
+        }),
+      })
+
+      const data = await res.json()
+      if (data.error) throw new Error(data.error)
+      
+      // Mark as applied
+      setAppliedIds(prev => new Set([...prev, suggestion.id]))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to apply suggestion')
+    } finally {
+      setApplyingId(null)
+    }
+  }
+
+  function dismissSuggestion(suggestionId: string) {
+    if (!suggestions) return
+    setSuggestions({
+      ...suggestions,
+      suggestions: suggestions.suggestions.filter(s => s.id !== suggestionId)
+    })
   }
 
   async function handleSaveResult() {
@@ -174,45 +312,37 @@ export default function PlaygroundPage() {
 
       {error && <ErrorAlert message={error} onDismiss={() => setError(null)} />}
 
-      <div className={styles.section}>
-        <div className={formStyles.formRow}>
-          <div className={formStyles.formGroup}>
-            <label className={formStyles.label}>Prompt Version</label>
-            <select
-              className={formStyles.select}
-              value={selectedPromptId || ''}
-              onChange={(e) => setSelectedPromptId(Number(e.target.value))}
-            >
-              <option value="">-- Select a prompt version --</option>
-              {prompts.map((prompt) => (
-                <option key={prompt.id} value={prompt.id}>
-                  {prompt.name} {prompt.is_active ? '(Active)' : ''}
-                </option>
-              ))}
-            </select>
-            <div className={formStyles.helpText}>
-              Choose which prompt version to use for generating responses
-            </div>
-          </div>
+      <div className={styles.playgroundControls}>
+        <div className={styles.controlGroup}>
+          <h3 className={formStyles.sectionLabel}>Prompt Version</h3>
+          <select
+            className={formStyles.select}
+            value={selectedPromptId || ''}
+            onChange={(e) => setSelectedPromptId(Number(e.target.value))}
+          >
+            <option value="">-- Select a prompt version --</option>
+            {prompts.map((prompt) => (
+              <option key={prompt.id} value={prompt.id}>
+                {prompt.name} {prompt.is_active ? '(Active)' : ''}
+              </option>
+            ))}
+          </select>
+        </div>
 
-          <div className={formStyles.formGroup}>
-            <label className={formStyles.label}>Test Case (Optional)</label>
-            <select
-              className={formStyles.select}
-              value={selectedTestCaseId || ''}
-              onChange={(e) => loadTestCase(Number(e.target.value))}
-            >
-              <option value="">-- Load a saved test case --</option>
-              {testCases.map((tc) => (
-                <option key={tc.id} value={tc.id}>
-                  {tc.name}
-                </option>
-              ))}
-            </select>
-            <div className={formStyles.helpText}>
-              Load a saved email thread or paste your own below
-            </div>
-          </div>
+        <div className={styles.controlGroup}>
+          <h3 className={formStyles.sectionLabel}>Test Case</h3>
+          <select
+            className={formStyles.select}
+            value={selectedTestCaseId || ''}
+            onChange={(e) => loadTestCase(Number(e.target.value))}
+          >
+            <option value="">-- Load a saved test case --</option>
+            {testCases.map((tc) => (
+              <option key={tc.id} value={tc.id}>
+                {tc.name}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 
@@ -358,6 +488,121 @@ export default function PlaygroundPage() {
           </div>
         </div>
       </div>
+
+      {/* Improvement Suggestions Panel */}
+      {(loadingSuggestions || (suggestions && suggestions.suggestions.length > 0)) && (
+        <div className={styles.suggestionsPanel}>
+          <div className={styles.suggestionsPanelHeader}>
+            <div className={styles.suggestionsTitleRow}>
+              <Icons.Lightbulb size={20} className={styles.iconWarning} />
+              <h3 className={formStyles.sectionLabel}>Improvement Suggestions</h3>
+            </div>
+            {suggestions && (
+              <p className={styles.suggestionsSummary}>{suggestions.summary}</p>
+            )}
+          </div>
+
+          {loadingSuggestions ? (
+            <div className={styles.suggestionsLoading}>
+              <Icons.Loader2 size={24} className="animate-spin" />
+              <p>Analyzing evaluation results...</p>
+            </div>
+          ) : (
+            <div className={styles.suggestionsList}>
+              {suggestions?.suggestions.map((suggestion) => {
+                const isApplied = appliedIds.has(suggestion.id)
+                const isApplying = applyingId === suggestion.id
+                
+                return (
+                  <div 
+                    key={suggestion.id} 
+                    className={`${styles.suggestionCard} ${isApplied ? styles.suggestionApplied : ''}`}
+                  >
+                    <div className={styles.suggestionHeader}>
+                      <div className={styles.suggestionMeta}>
+                        <span className={`${styles.suggestionPriority} ${styles[`priority${suggestion.priority.charAt(0).toUpperCase() + suggestion.priority.slice(1)}`]}`}>
+                          {suggestion.priority}
+                        </span>
+                        <span className={styles.suggestionType}>
+                          {suggestion.type === 'new_step' ? (
+                            <>
+                              <Icons.FolderPlus size={14} />
+                              New Step
+                            </>
+                          ) : (
+                            <>
+                              <Icons.Plus size={14} />
+                              Add to Existing
+                            </>
+                          )}
+                        </span>
+                        {suggestion.ruleViolated && (
+                          <span className={styles.suggestionRule}>
+                            <Icons.AlertTriangle size={14} />
+                            {suggestion.ruleViolated}
+                          </span>
+                        )}
+                      </div>
+                      {!isApplied && (
+                        <div className={styles.suggestionActions}>
+                          <button
+                            onClick={() => applySuggestion(suggestion)}
+                            className={btnStyles.success}
+                            disabled={isApplying}
+                          >
+                            {isApplying ? (
+                              <>
+                                <Icons.Loader2 size={14} className="animate-spin" />
+                                Applying...
+                              </>
+                            ) : (
+                              <>
+                                <Icons.Check size={14} />
+                                Apply
+                              </>
+                            )}
+                          </button>
+                          <button
+                            onClick={() => dismissSuggestion(suggestion.id)}
+                            className={btnStyles.ghost}
+                            title="Dismiss"
+                          >
+                            <Icons.X size={14} />
+                          </button>
+                        </div>
+                      )}
+                      {isApplied && (
+                        <span className={styles.suggestionAppliedBadge}>
+                          <Icons.CheckCircle size={14} />
+                          Applied
+                        </span>
+                      )}
+                    </div>
+                    
+                    <div className={styles.suggestionContent}>
+                      <div className={styles.suggestionTarget}>
+                        <strong>Step:</strong> {suggestion.stepTitle}
+                      </div>
+                      <div className={styles.suggestionEntry}>
+                        <div className={styles.suggestionEntryTitle}>
+                          <strong>{suggestion.questionTitle}</strong>
+                        </div>
+                        <div className={styles.suggestionEntryValue}>
+                          {suggestion.questionValue}
+                        </div>
+                      </div>
+                      <div className={styles.suggestionReasoning}>
+                        <Icons.Info size={14} />
+                        {suggestion.reasoning}
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }

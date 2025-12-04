@@ -7,11 +7,20 @@ import ErrorAlert from '@/components/ErrorAlert'
 import styles from '@/styles/components.module.css'
 import * as Icons from 'lucide-react'
 
+interface WizardStatus {
+  isComplete: boolean
+  totalSteps: number
+  completedSteps: number
+  totalQuestions: number
+  answeredQuestions: number
+  percentComplete: number
+}
+
 interface DashboardStats {
   totalPrompts: number
   totalTestCases: number
   databaseConnected: boolean
-  trainingComplete: boolean
+  wizardStatus: WizardStatus
 }
 
 export default function Home() {
@@ -28,21 +37,29 @@ export default function Home() {
       setLoading(true)
       setError(null)
 
-      // Fetch prompts
-      const promptsRes = await fetch('/api/prompts')
+      // Fetch all data in parallel
+      const [promptsRes, testCasesRes, wizardRes] = await Promise.all([
+        fetch('/api/prompts'),
+        fetch('/api/test-cases'),
+        fetch('/api/wizard/status'),
+      ])
+      
       const promptsData = await promptsRes.json()
-      const prompts = promptsData.data || []
-
-      // Fetch test cases
-      const testCasesRes = await fetch('/api/test-cases')
       const testCasesData = await testCasesRes.json()
-      const testCases = testCasesData.data || []
+      const wizardData = await wizardRes.json()
 
       setStats({
-        totalPrompts: prompts.length,
-        totalTestCases: testCases.length,
+        totalPrompts: (promptsData.data || []).length,
+        totalTestCases: (testCasesData.data || []).length,
         databaseConnected: true,
-        trainingComplete: false,
+        wizardStatus: wizardData.data || {
+          isComplete: false,
+          totalSteps: 0,
+          completedSteps: 0,
+          totalQuestions: 0,
+          answeredQuestions: 0,
+          percentComplete: 0,
+        },
       })
     } catch (err) {
       setError('Failed to load dashboard stats')
@@ -50,7 +67,14 @@ export default function Home() {
         totalPrompts: 0,
         totalTestCases: 0,
         databaseConnected: false,
-        trainingComplete: false,
+        wizardStatus: {
+          isComplete: false,
+          totalSteps: 0,
+          completedSteps: 0,
+          totalQuestions: 0,
+          answeredQuestions: 0,
+          percentComplete: 0,
+        },
       })
       console.error(err)
     } finally {
@@ -88,15 +112,20 @@ export default function Home() {
               </div>
             </div>
 
-            <div className={`${styles.statusCard} ${!stats.trainingComplete ? styles.statusCardWarning : ''}`}>
+            <div className={`${styles.statusCard} ${!stats.wizardStatus.isComplete ? styles.statusCardWarning : ''}`}>
               <div className={styles.statusIcon}>
                 <Icons.Wand2 size={24} />
               </div>
               <div className={styles.statusContent}>
                 <div className={styles.statusLabel}>Training Wizard</div>
                 <div className={styles.statusValue}>
-                  {stats.trainingComplete ? 'Complete' : 'Incomplete'}
+                  {stats.wizardStatus.isComplete ? 'Complete' : `${stats.wizardStatus.percentComplete}% Complete`}
                 </div>
+                {!stats.wizardStatus.isComplete && stats.wizardStatus.totalSteps > 0 && (
+                  <div className={styles.statusMeta}>
+                    {stats.wizardStatus.completedSteps}/{stats.wizardStatus.totalSteps} steps
+                  </div>
+                )}
               </div>
             </div>
 
@@ -140,18 +169,18 @@ export default function Home() {
                   <Icons.FileEdit size={24} />
                 </div>
                 <div className={styles.quickActionContent}>
-                  <h3>Create Your First Prompt Version</h3>
-                  <p>Import your current Meta.com prompts to start testing</p>
+                  <h3>Manage Prompt Versions</h3>
+                  <p>Create and edit system prompts for your CS agent</p>
                 </div>
               </Link>
 
               <Link href="/test-cases" className={styles.quickActionCard}>
                 <div className={styles.quickActionIcon}>
-                  <Icons.TestTube2 size={24} />
+                  <Icons.Mail size={24} />
                 </div>
                 <div className={styles.quickActionContent}>
-                  <h3>Add Test Cases</h3>
-                  <p>Import historical email examples to test against</p>
+                  <h3>Add Customer Emails</h3>
+                  <p>Add sample emails to test your prompts against</p>
                 </div>
               </Link>
 
@@ -160,8 +189,8 @@ export default function Home() {
                   <Icons.Play size={24} />
                 </div>
                 <div className={styles.quickActionContent}>
-                  <h3>Quick Test</h3>
-                  <p>Test a prompt against an email without saving</p>
+                  <h3>Open Playground</h3>
+                  <p>Generate responses and evaluate them against your training</p>
                 </div>
               </Link>
             </div>

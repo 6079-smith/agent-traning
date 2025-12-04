@@ -23,6 +23,7 @@ export default function PromptsPage() {
   const [submitting, setSubmitting] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
   const [generating, setGenerating] = useState(false)
+  const [generateProgress, setGenerateProgress] = useState(0)
 
   useEffect(() => {
     fetchPrompts()
@@ -52,14 +53,34 @@ export default function PromptsPage() {
   async function generateFromTraining() {
     try {
       setGenerating(true)
+      setGenerateProgress(0)
       setError(null)
+      
+      // Simulate progress while waiting for API (takes ~10-15 seconds typically)
+      const progressInterval = setInterval(() => {
+        setGenerateProgress(prev => {
+          // Slow down as we approach 90% (never reach 100% until done)
+          if (prev < 30) return prev + 3
+          if (prev < 60) return prev + 2
+          if (prev < 85) return prev + 1
+          return Math.min(prev + 0.5, 90)
+        })
+      }, 300)
       
       const res = await fetch('/api/prompts/generate', { method: 'POST' })
       const data = await res.json()
       
+      clearInterval(progressInterval)
+      
       if (data.error) {
         throw new Error(data.error)
       }
+      
+      // Complete the progress bar
+      setGenerateProgress(100)
+      
+      // Small delay to show 100% before resetting
+      await new Promise(resolve => setTimeout(resolve, 300))
       
       // Pre-fill the form with generated content, but keep existing name if user already entered one
       setIsCreating(true)
@@ -74,6 +95,7 @@ export default function PromptsPage() {
       setError(err instanceof Error ? err.message : 'Failed to generate prompt')
     } finally {
       setGenerating(false)
+      setGenerateProgress(0)
     }
   }
 
@@ -164,23 +186,23 @@ export default function PromptsPage() {
           <p className={styles.promptEditorSubtitle}>Manage and version control your system prompts</p>
         </div>
         <div className={styles.promptEditorActions}>
-          <button 
-            onClick={generateFromTraining} 
-            className={btnStyles.primary}
-            disabled={generating}
-          >
-            {generating ? (
-              <>
-                <Icons.Loader2 size={18} className="animate-spin" />
-                Generating...
-              </>
-            ) : (
-              <>
-                <Icons.Sparkles size={18} />
-                Generate from Training
-              </>
-            )}
-          </button>
+          {generating ? (
+            <button 
+              className={btnStyles.progressButton}
+              style={{ '--progress': `${generateProgress}%` } as React.CSSProperties}
+              disabled
+            >
+              <span>Generating... {Math.round(generateProgress)}%</span>
+            </button>
+          ) : (
+            <button 
+              onClick={generateFromTraining} 
+              className={btnStyles.primary}
+            >
+              <Icons.Sparkles size={18} />
+              Generate from Training
+            </button>
+          )}
           <button onClick={startCreate} className={btnStyles.secondary}>
             <Icons.FileText size={18} />
             New Blank Version

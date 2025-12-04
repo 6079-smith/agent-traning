@@ -123,37 +123,34 @@ export default function ResultsPage() {
 
       {error && <ErrorAlert message={error} onDismiss={() => setError(null)} />}
 
-      {/* Summary Cards */}
-      <div className={styles.statsPanel}>
-        <div className={styles.statsCard}>
-          <div className={styles.statsCardHeader}>
-            <span className={styles.statsCardTitle}>Total Results</span>
+      {/* Compact Stats & Filters Row */}
+      <div className={styles.resultsControlsCard}>
+        <div className={styles.resultsStatsRow}>
+          <div className={styles.resultsStat}>
+            <span className={styles.resultsStatLabel}>Total</span>
+            <span className={styles.resultsStatValue}>{totalResults}</span>
           </div>
-          <div className={styles.statsCardValue}>{totalResults}</div>
-        </div>
-        <div className={styles.statsCard}>
-          <div className={styles.statsCardHeader}>
-            <span className={styles.statsCardTitle}>Average Score</span>
+          <div className={styles.resultsStatDivider} />
+          <div className={styles.resultsStat}>
+            <span className={styles.resultsStatLabel}>Avg Score</span>
+            <span 
+              className={styles.resultsStatValue}
+              style={{ color: avgScore && avgScore >= 70 ? '#22c55e' : avgScore && avgScore >= 50 ? '#eab308' : '#ef4444' }}
+            >
+              {avgScore !== null ? `${avgScore}%` : '—'}
+            </span>
           </div>
-          <div className={styles.statsCardValue} style={{ color: avgScore && avgScore >= 70 ? 'var(--btn-success)' : avgScore && avgScore >= 50 ? 'var(--warning)' : 'var(--danger)' }}>
-            {avgScore !== null ? `${avgScore}%` : 'N/A'}
+          <div className={styles.resultsStatDivider} />
+          <div className={styles.resultsStat}>
+            <span className={styles.resultsStatLabel}>Pass Rate</span>
+            <span 
+              className={styles.resultsStatValue}
+              style={{ color: passRate >= 70 ? '#22c55e' : passRate >= 50 ? '#eab308' : '#ef4444' }}
+            >
+              {totalResults > 0 ? `${passRate}%` : '—'}
+            </span>
           </div>
-        </div>
-        <div className={styles.statsCard}>
-          <div className={styles.statsCardHeader}>
-            <span className={styles.statsCardTitle}>Pass Rate</span>
-          </div>
-          <div className={styles.statsCardValue} style={{ color: passRate >= 70 ? 'var(--btn-success)' : passRate >= 50 ? 'var(--warning)' : 'var(--danger)' }}>
-            {totalResults > 0 ? `${passRate}%` : 'N/A'}
-          </div>
-        </div>
-      </div>
-
-      {/* Filters */}
-      <div className={styles.section}>
-        <div className={formStyles.formRow}>
-          <div className={formStyles.formGroup}>
-            <label className={formStyles.label}>Filter by Prompt Version</label>
+          <div className={styles.resultsFilters}>
             <select
               className={formStyles.select}
               value={selectedPromptId}
@@ -166,10 +163,6 @@ export default function ResultsPage() {
                 </option>
               ))}
             </select>
-          </div>
-
-          <div className={formStyles.formGroup}>
-            <label className={formStyles.label}>Filter by Test Case</label>
             <select
               className={formStyles.select}
               value={selectedTestCaseId}
@@ -187,107 +180,103 @@ export default function ResultsPage() {
       </div>
 
       {/* Results List */}
-      <div className={styles.resultsCard}>
-        <div className={styles.resultsCardHeader}>
-          <h2>Test Results</h2>
+      {filteredResults.length === 0 ? (
+        <div className={styles.emptyState}>
+          <Icons.BarChart3 size={48} />
+          <h3>No results yet</h3>
+          <p>Run some tests in the Playground to see results here</p>
         </div>
-
-        {filteredResults.length === 0 ? (
-          <div className={styles.emptyState}>
-            <Icons.BarChart3 size={48} />
-            <p>No results yet. Run some tests in the Playground!</p>
-          </div>
-        ) : (
-          <div>
-            {filteredResults.map((result) => (
-              <div key={result.id} className={styles.resultItem}>
-                <button
-                  onClick={() => setExpandedResult(expandedResult === result.id ? null : result.id)}
-                  className={styles.resultItemHeader}
-                >
-                  <div className={styles.resultItemHeaderLeft}>
-                    <div 
-                      className={styles.resultScore}
-                      style={{
-                        color: result.evaluator_score && result.evaluator_score >= 70 
-                          ? 'var(--btn-success)' 
-                          : result.evaluator_score && result.evaluator_score >= 40 
-                          ? 'var(--warning)' 
-                          : 'var(--danger)'
-                      }}
-                    >
-                      {result.evaluator_score !== null ? `${result.evaluator_score}%` : 'N/A'}
-                    </div>
-                    <div>
-                      <p className={styles.resultItemTitle}>
-                        {result.test_case_name || `Test Case #${result.test_case_id}`}
-                      </p>
-                      <p className={styles.resultItemMeta}>
-                        {result.prompt_version_name || `Prompt #${result.prompt_version_id}`} • {new Date(result.created_at).toLocaleString()}
-                      </p>
-                    </div>
+      ) : (
+        <div className={styles.resultsList}>
+          {filteredResults.map((result) => (
+            <div key={result.id} className={styles.resultCard}>
+              <div 
+                className={styles.resultCardHeader}
+                onClick={() => setExpandedResult(expandedResult === result.id ? null : result.id)}
+              >
+                <div className={styles.resultCardScore}>
+                  <span 
+                    className={styles.scoreValue}
+                    style={{
+                      color: result.evaluator_score && result.evaluator_score >= 70 
+                        ? '#22c55e' 
+                        : result.evaluator_score && result.evaluator_score >= 40 
+                        ? '#eab308' 
+                        : '#ef4444'
+                    }}
+                  >
+                    {result.evaluator_score !== null ? result.evaluator_score : '—'}
+                  </span>
+                  <span className={styles.scoreLabel}>/ 100</span>
+                </div>
+                <div className={styles.resultCardInfo}>
+                  <h3 className={formStyles.sectionLabel}>
+                    {result.test_case_name || `Test Case #${result.test_case_id}`}
+                  </h3>
+                  <div className={styles.resultCardMeta}>
+                    <span>
+                      <Icons.FileText size={14} />
+                      {result.prompt_version_name || `Prompt #${result.prompt_version_id}`}
+                    </span>
+                    <span>
+                      <Icons.Calendar size={14} />
+                      {new Date(result.created_at).toLocaleDateString()}
+                    </span>
+                    <span>
+                      <Icons.Clock size={14} />
+                      {new Date(result.created_at).toLocaleTimeString()}
+                    </span>
                   </div>
-                  {expandedResult === result.id ? (
-                    <Icons.ChevronUp size={20} style={{ color: 'var(--text-muted)' }} />
-                  ) : (
-                    <Icons.ChevronDown size={20} style={{ color: 'var(--text-muted)' }} />
-                  )}
-                </button>
-
-                {expandedResult === result.id && (
-                  <div className={styles.resultItemExpanded}>
-                    <div className={styles.resultItemGrid}>
-                      <div>
-                        <p className={styles.resultItemLabel}>Email Thread</p>
-                        <pre className={styles.resultItemPre}>
-                          {result.email_thread || 'N/A'}
-                        </pre>
-                      </div>
-                      <div>
-                        <p className={styles.resultItemLabel}>Agent Response</p>
-                        <div className={styles.resultItemResponse}>
-                          {result.agent_response}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div style={{ marginTop: 'var(--space-3)' }}>
-                      <p className={styles.resultItemLabel}>Evaluator Reasoning</p>
-                      <p className={styles.resultItemReasoning}>
-                        {result.evaluator_reasoning || 'No reasoning provided'}
-                      </p>
-                    </div>
-
-                    {result.rule_checks && typeof result.rule_checks === 'object' && (
-                      <div style={{ marginTop: 'var(--space-3)' }}>
-                        <p className={styles.resultItemLabel}>Rule Checks</p>
-                        <div className={styles.ruleChecksContainer}>
-                          {Object.entries(result.rule_checks).map(([rule, check]: [string, any]) => (
-                            <span
-                              key={rule}
-                              className={styles.ruleCheckBadge}
-                              style={{
-                                background: check.status === 'PASS' 
-                                  ? 'rgba(70, 155, 59, 0.15)' 
-                                  : 'rgba(239, 68, 68, 0.15)',
-                                color: check.status === 'PASS' 
-                                  ? 'var(--btn-success)' 
-                                  : 'var(--danger)'
-                              }}
-                            >
-                              {rule}: {check.status}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
+                </div>
+                <Icons.ChevronDown 
+                  size={20} 
+                  className={`${formStyles.sectionToggle} ${expandedResult !== result.id ? formStyles.collapsed : ''}`}
+                />
               </div>
-            ))}
-          </div>
-        )}
-      </div>
+
+              {expandedResult === result.id && (
+                <div className={styles.resultCardExpanded}>
+                  <div className={styles.resultCardGrid}>
+                    <div className={styles.resultCardSection}>
+                      <h4>Agent Response</h4>
+                      <div className={styles.resultCardContent}>
+                        {result.agent_response}
+                      </div>
+                    </div>
+                  </div>
+
+                  {result.evaluator_reasoning && (
+                    <div className={styles.resultCardSection}>
+                      <h4>Evaluation</h4>
+                      <div className={styles.resultCardContent}>
+                        {result.evaluator_reasoning}
+                      </div>
+                    </div>
+                  )}
+
+                  {result.rule_checks && typeof result.rule_checks === 'object' && (
+                    <div className={styles.resultCardSection}>
+                      <h4>Rule Checks</h4>
+                      <div className={styles.ruleChecksList}>
+                        {Object.entries(result.rule_checks).map(([rule, check]: [string, any]) => (
+                          <div key={rule} className={styles.ruleCheckItem}>
+                            {check.passed ? (
+                              <Icons.CheckCircle size={16} className={styles.iconSuccess} />
+                            ) : (
+                              <Icons.XCircle size={16} className={styles.iconDanger} />
+                            )}
+                            <span>{rule}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

@@ -409,3 +409,40 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* Progress Button - fills with color as progress increases */
+.progressButton {
+  position: relative;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background-color: #2a3a4a;
+  color: #ffffff;
+  border: 1px solid #4471BA;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: not-allowed;
+  overflow: hidden;
+  min-width: 200px;
+  white-space: nowrap;
+}
+
+.progressButton::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: var(--progress, 0%);
+  background: linear-gradient(90deg, #4471BA 0%, #5a8fd4 100%);
+  transition: width 0.3s ease-out;
+  z-index: 0;
+}
+
+.progressButton span {
+  position: relative;
+  z-index: 1;
+}

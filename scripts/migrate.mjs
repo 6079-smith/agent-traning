@@ -66,7 +66,7 @@ const migrations = [
     test_case_id INTEGER REFERENCES test_cases(id) ON DELETE CASCADE,
     prompt_version_id INTEGER REFERENCES prompt_versions(id) ON DELETE CASCADE,
     agent_response TEXT NOT NULL,
-    evaluator_score INTEGER CHECK (evaluator_score >= 1 AND evaluator_score <= 10),
+    evaluator_score INTEGER CHECK (evaluator_score >= 0 AND evaluator_score <= 100),
     evaluator_reasoning TEXT,
     rule_checks JSONB,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -90,6 +90,9 @@ const migrations = [
   `CREATE INDEX IF NOT EXISTS idx_test_results_test_case ON test_results(test_case_id)`,
   `CREATE INDEX IF NOT EXISTS idx_test_results_prompt_version ON test_results(prompt_version_id)`,
   `CREATE INDEX IF NOT EXISTS idx_knowledge_base_category ON knowledge_base(category)`,
+  // Fix evaluator_score constraint to allow 0-100 range
+  `ALTER TABLE test_results DROP CONSTRAINT IF EXISTS test_results_evaluator_score_check`,
+  `ALTER TABLE test_results ADD CONSTRAINT test_results_evaluator_score_check CHECK (evaluator_score >= 0 AND evaluator_score <= 100)`,
 ]
 
 async function runMigrations() {

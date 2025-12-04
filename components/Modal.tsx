@@ -10,10 +10,11 @@ interface ModalProps {
   onClose: () => void
   title: string
   children: ReactNode
+  footer?: ReactNode
   size?: 'small' | 'medium' | 'large'
 }
 
-export default function Modal({ isOpen, onClose, title, children, size = 'medium' }: ModalProps) {
+export default function Modal({ isOpen, onClose, title, children, footer, size = 'medium' }: ModalProps) {
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden'
@@ -40,6 +41,7 @@ export default function Modal({ isOpen, onClose, title, children, size = 'medium
           </button>
         </div>
         <div className={styles.modalBody}>{children}</div>
+        {footer && <div className={styles.modalFooter}>{footer}</div>}
       </div>
     </div>
   )
