@@ -18,6 +18,13 @@ interface EvaluatorRuleWithSource extends EvaluatorRule {
   step_title?: string
 }
 
+interface WizardStep {
+  id: number
+  title: string
+  category: string
+  sort_order: number
+}
+
 export default function EvaluatorRulesPage() {
   const router = useRouter()
   const [rules, setRules] = useState<EvaluatorRuleWithSource[]>([])
@@ -27,17 +34,30 @@ export default function EvaluatorRulesPage() {
   const [editForm, setEditForm] = useState<Partial<EvaluatorRule>>({})
   const [showAddForm, setShowAddForm] = useState(false)
   const [sourceFilter, setSourceFilter] = useState<string>('all')
+  const [wizardSteps, setWizardSteps] = useState<WizardStep[]>([])
   const [newRule, setNewRule] = useState({
     name: '',
     description: '',
     check_prompt: '',
     priority: 5,
-    is_active: true
+    is_active: true,
+    category: ''
   })
 
   useEffect(() => {
     fetchRules()
+    fetchWizardSteps()
   }, [])
+
+  async function fetchWizardSteps() {
+    try {
+      const res = await fetch('/api/wizard-steps')
+      const data = await res.json()
+      if (data.data) setWizardSteps(data.data)
+    } catch (err) {
+      console.error('Failed to fetch wizard steps:', err)
+    }
+  }
 
   async function fetchRules() {
     try {
@@ -89,7 +109,7 @@ export default function EvaluatorRulesPage() {
       if (data.error) throw new Error(data.error)
       
       setShowAddForm(false)
-      setNewRule({ name: '', description: '', check_prompt: '', priority: 5, is_active: true })
+      setNewRule({ name: '', description: '', check_prompt: '', priority: 5, is_active: true, category: '' })
       fetchRules()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to add rule')
@@ -233,26 +253,43 @@ export default function EvaluatorRulesPage() {
               />
             </div>
             <div className={styles.formGroup}>
-              <label>Check Prompt</label>
+              <label>Evaluation Criteria</label>
               <textarea
                 value={newRule.check_prompt}
                 onChange={(e) => setNewRule({ ...newRule, check_prompt: e.target.value })}
-                placeholder="The prompt/question the AI will use to check this rule..."
+                placeholder="Describe what to check, e.g.: 'Does the response acknowledge the customer's frustration before offering solutions?'"
                 className={styles.textarea}
                 rows={3}
               />
             </div>
             <div className={styles.formGroup}>
-              <label>Priority (1-10)</label>
-              <input
-                type="number"
-                min={1}
-                max={10}
-                value={newRule.priority}
-                onChange={(e) => setNewRule({ ...newRule, priority: parseInt(e.target.value) || 5 })}
-                className={styles.input}
-                style={{ width: '100px' }}
-              />
+              <label>Wizard Step</label>
+              <select
+                value={newRule.category}
+                onChange={(e) => setNewRule({ ...newRule, category: e.target.value })}
+                className={styles.manualSelect}
+              >
+                <option value="">-- Select a step (optional) --</option>
+                {wizardSteps.map(step => (
+                  <option key={step.id} value={step.category}>{step.title}</option>
+                ))}
+              </select>
+            </div>
+            <div className={styles.formGroup}>
+              <label>Priority</label>
+              <select
+                value={newRule.priority >= 8 ? 'high' : newRule.priority >= 4 ? 'medium' : 'low'}
+                onChange={(e) => {
+                  const val = e.target.value
+                  setNewRule({ ...newRule, priority: val === 'high' ? 9 : val === 'medium' ? 5 : 2 })
+                }}
+                className={styles.manualSelect}
+                style={{ width: '140px' }}
+              >
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+              </select>
             </div>
             <div className={styles.formActions}>
               <button className={btnStyles.success} onClick={handleAdd}>

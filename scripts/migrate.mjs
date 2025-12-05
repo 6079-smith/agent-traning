@@ -106,6 +106,9 @@ const migrations = [
   // Add missing wizard steps for orphaned knowledge base categories
   `INSERT INTO wizard_steps (title, category, sort_order) VALUES ('Escalation Triggers', 'escalation_triggers', 7) ON CONFLICT (category) DO NOTHING`,
   `INSERT INTO wizard_steps (title, category, sort_order) VALUES ('Refund Handling', 'refund_handling', 8) ON CONFLICT (category) DO NOTHING`,
+  // Add category column to evaluator_rules for manual rules linked to wizard steps
+  `ALTER TABLE evaluator_rules ADD COLUMN IF NOT EXISTS category VARCHAR(100)`,
+  `CREATE INDEX IF NOT EXISTS idx_evaluator_rules_category ON evaluator_rules(category)`,
 ]
 
 async function runMigrations() {

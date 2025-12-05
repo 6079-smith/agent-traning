@@ -24,15 +24,25 @@ export async function GET(request: NextRequest) {
     
     // Join with knowledge_base and wizard_steps to get source info
     const query = all 
-      ? `SELECT er.*, kb.category as kb_category, kb.key as kb_key, kb.display_title as kb_display_title, ws.title as step_title
+      ? `SELECT er.*, 
+                kb.category as kb_category, 
+                kb.key as kb_key, 
+                kb.display_title as kb_display_title, 
+                COALESCE(ws.title, ws2.title) as step_title
          FROM evaluator_rules er
          LEFT JOIN knowledge_base kb ON er.knowledge_base_id = kb.id
          LEFT JOIN wizard_steps ws ON kb.category = ws.category
+         LEFT JOIN wizard_steps ws2 ON er.category = ws2.category
          ORDER BY er.priority DESC, er.name`
-      : `SELECT er.*, kb.category as kb_category, kb.key as kb_key, kb.display_title as kb_display_title, ws.title as step_title
+      : `SELECT er.*, 
+                kb.category as kb_category, 
+                kb.key as kb_key, 
+                kb.display_title as kb_display_title, 
+                COALESCE(ws.title, ws2.title) as step_title
          FROM evaluator_rules er
          LEFT JOIN knowledge_base kb ON er.knowledge_base_id = kb.id
          LEFT JOIN wizard_steps ws ON kb.category = ws.category
+         LEFT JOIN wizard_steps ws2 ON er.category = ws2.category
          WHERE er.is_active = true
          ORDER BY er.priority DESC, er.name`
     
@@ -64,10 +74,10 @@ export async function POST(request: NextRequest) {
     }
     
     const rule = await queryOne<EvaluatorRule>(
-      `INSERT INTO evaluator_rules (name, description, check_prompt, priority, is_active)
-       VALUES ($1, $2, $3, $4, $5)
+      `INSERT INTO evaluator_rules (name, description, check_prompt, priority, is_active, category)
+       VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING *`,
-      [body.name, body.description || null, body.check_prompt, body.priority || 5, body.is_active ?? true]
+      [body.name, body.description || null, body.check_prompt, body.priority || 5, body.is_active ?? true, body.category || null]
     )
     
     return NextResponse.json({ data: rule } as ApiResponse<EvaluatorRule>)
